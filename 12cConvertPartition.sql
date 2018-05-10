@@ -22,7 +22,7 @@ update indexes (
 ;
 
 
-CREATE OR REPLACE procedure ALZ_OPUS.convert_partition(p_owner varchar2, p_table_name varchar2, p_parallel_degree number default 16)
+CREATE OR REPLACE procedure bakis.convert_partition(p_owner varchar2, p_table_name varchar2, p_parallel_degree number default 16)
 is
  l_constraint_name VARCHAR2 (30); 
  l_index_name      VARCHAR2 (30);
