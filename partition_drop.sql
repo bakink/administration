@@ -43,3 +43,39 @@ exception
    dbms_output.put_line(l_error);
    raise;
 end;         
+
+
+---Based on parameter table:
+create table ALZADMIN.ARCHIVED_TAB_PARAMS (
+owner varchar2(30),
+table_name varchar2(30),
+retention_val number(2),  -- saklama suresi
+)
+
+
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','ALZ_TRAMER_MOD_WS',1);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','KOC_TRAMER_WS_LOG',1);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','G2_CONLOG',4);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','G2_LOG',4);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','ALZ_HLTPRV_LOG',4);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','ALZ_DOC_RECOVERY',1);
+insert into ALZADMIN.ARCHIVED_TAB_PARAMS values ('CUSTOMER','GWS_BANK_OUTGOING_SERVICE_LOG',1);
+
+select 'alter table '||a.table_owner||'.'||a.table_name||' drop partition '||a.partition_name||';' 
+from 
+(with xml as (
+  select dbms_xmlgen.getxmltype('select table_owner,table_name, partition_name, high_value,partition_position from dba_tab_partitions where table_owner=''CUSTOMER'' and table_name = ''GWS_BANK_OUTGOING_SERVICE_LOG''') as x
+  from   dual
+)
+  select extractValue(rws.object_value, '/ROW/TABLE_OWNER') table_owner,
+         extractValue(rws.object_value, '/ROW/TABLE_NAME') table_name,
+         extractValue(rws.object_value, '/ROW/PARTITION_NAME') partition_name,
+         replace(extractValue(rws.object_value, '/ROW/HIGH_VALUE'),'TIMESTAMP'' ','''') high_value,
+         to_number(extractValue(rws.object_value, '/ROW/PARTITION_POSITION')) partition_position         
+  from   xml x, 
+         table(xmlsequence(extract(x.x, '/ROWSET/ROW'))) rws
+         order by partition_position
+) A, ALZADMIN.ARCHIVED_TAB_PARAMS B
+where a.table_owner=b.owner and 
+      a.table_name=b.table_name and  
+      to_date(replace(a.high_value,'''',null),' yyyy-mm-dd hh24:mi:ss') <  add_months(sysdate,-B.RETENTION_VAL)
