@@ -1,0 +1,17 @@
+---https://asktom.oracle.com/pls/asktom/f?p=100:11:0::::P11_QUESTION_ID:9535564000346963608
+
+BEGIN
+       DBMS_METADATA.set_transform_param (DBMS_METADATA.session_transform, 'SQLTERMINATOR', true);
+       DBMS_METADATA.set_transform_param (DBMS_METADATA.session_transform, 'PRETTY', true);
+       DBMS_METADATA.set_transform_param (DBMS_METADATA.session_transform, 'SEGMENT_ATTRIBUTES', true);
+       DBMS_METADATA.set_transform_param (DBMS_METADATA.session_transform, 'STORAGE', false);
+    END;
+/
+
+select dbms_metadata.get_ddl('INDEX',b.index_name,B.OWNER) from dba_tables a,dba_indexes b
+where a.owner=B.TABLE_OWNER
+and A.TABLE_NAME=B.TABLE_NAME 
+and a.table_name in (
+'COG_MOTOR_PROPOSAL_HITRATE_RDS'
+,'COG_MOTOR_PROPOSAL_TREND'
+)
