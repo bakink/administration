@@ -1,0 +1,4 @@
+# connection rate to the listener
+--https://twitter.com/FranckPachot/status/1004674771441864704
+
+adrci exec='set home diag/tnslsnr ; show alert -term -p \"' "MESSAGE_TEXT like \'%establish%\' and ORIGINATING_TIMESTAMP > \'2018-06-07 00:00:00\'" '\"' | awk '/establish/{sub(/:.*/,"",$2);print "connection/hour at "$1,$2":00-"$2":59"}' | uniq -c
