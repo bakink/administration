@@ -1,0 +1,6 @@
+
+--https://community.oracle.com/blogs/smit/2017/03/22/convert-range-partitions-to-interval-partition
+
+alter table TEST set INTERVAL(NUMTOYMINTERVAL(1, 'MONTH'));
+--round robin tbs
+alter table TEST set store in (TBSPART_01,TBSPART_02,TBSPART_03,TBSPART_04,TBSPART_05,TBSPART_06,TBSPART_07,TBSPART_08,TBSPART_09,TBSPART_10,TBSPART_11,TBSPART_12);
