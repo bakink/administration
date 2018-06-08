@@ -1,0 +1,17 @@
+
+--ORA-28017: The password file is in the legacy format (passwordfile new features in 12c) (Doc ID 2112456.1)
+
+--path for password file
+alzx6dbadm02@REPOPROD2|~]$srvctl config database -d REPOPROD
+Database unique name: REPOPROD
+Database name: 
+Oracle home: /u01/app/oracle/product/12.2.0/dbhome_1
+Oracle user: oracle
+Spfile: +DATAC1/REPOPROD/PARAMETERFILE/repo.spfile
+Password file: +DATAC1/REPOPROD/PASSWORDFILE/orapwrepoprod
+
+--desc format
+orapwd describe file='+DATAC1/REPOPROD/PASSWORDFILE/orapwREPOPROD';
+
+--change format to 12
+orapwd dbuniquename=REPOPROD file='+DATAC1/REPOPROD/PASSWORDFILE/orapwREPOPROD' entries=5 force=y password=sifre force=y format=12 input_file='+DATAC1/REPOPROD/PASSWORDFILE/orapwREPOPROD'
