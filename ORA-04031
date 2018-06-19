@@ -4,3 +4,211 @@
 select * from GV$SGASTAT
 where pool ='shared pool'
 order by bytes desc
+
+
+Problemle ilgili inceleme aşağıda;
+
+Alertlogda birçok ORA-4031 hatalarını görüyoruz.
+
+2018-06-08T20:51:43.063951+03:00
+Errors in file /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/trace/IRISDB1_ora_138111.trc  (incident=352249):
+ORA-04031: unable to allocate 13840 bytes of shared memory ("shared pool","unknown object","sga heap(1,0)","ges resource dynamic")
+Incident details in: /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/incident/incdir_352249/IRISDB1_ora_138111_i352249.trc
+
+2018-06-09T07:46:20.195586+03:00
+Errors in file /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/trace/IRISDB1_lmd0_95300.trc  (incident=348673):
+ORA-04031: unable to allocate 13840 bytes of shared memory ("shared pool","unknown object","sga heap(3,0)","ges resource dynamic")
+Incident details in: /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/incident/incdir_348673/IRISDB1_lmd0_95300_i348673.trc
+Use ADRCI or Support Workbench to package the incident.
+See Note 411.1 at My Oracle Support for error and packaging details.
+Errors in file /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/trace/IRISDB1_lmd0_95300.trc  (incident=348674):
+ORA-04031: unable to allocate 13840 bytes of shared memory ("shared pool","unknown object","sga heap(3,0)","ges resource dynamic")
+Incident details in: /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/incident/incdir_348674/IRISDB1_lmd0_95300_i348674.trc
+Use ADRCI or Support Workbench to package the incident.
+See Note 411.1 at My Oracle Support for error and packaging details.
+2018-06-09T07:46:21.878685+03:00
+Errors in file /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/trace/IRISDB1_lmd0_95300.trc  (incident=348675):
+ORA-04031: unable to allocate 13840 bytes of shared memory ("shared pool","unknown object","sga heap(3,0)","ges resource dynamic")
+Incident details in: /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/incident/incdir_348675/IRISDB1_lmd0_95300_i348675.trc
+Use ADRCI or Support Workbench to package the incident.
+See Note 411.1 at My Oracle Support for error and packaging details.
+Errors in file /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/trace/IRISDB1_lmd0_95300.trc  (incident=348676):
+ORA-04031: unable to allocate 13840 bytes of shared memory ("shared pool","unknown object","sga heap(3,0)","ges resource dynamic")
+Incident details in: /u01/app/oracle/diag/rdbms/irisdb/IRISDB1/incident/incdir_348676/IRISDB1_lmd0_95300_i348676.trc
+
+Tracelerden bir tanesini incelediğimizde  bu aralıkta shared poolun 1216 M den 5872 M’e kadar arttığı görülüyor. Bu memory buffer cache’den alınmış.
+
+sga_target               = 8589934592
+
+Summary of resize operations history:
+shared pool            start 1216 MB  now 5872 MB 310 grows   0 shrinks
+                       range 1072 MB  to  5872 MB
+large pool             start 2048 MB  now 2048 MB  0 grows   0 shrinks
+java pool              start   48 MB  now   16 MB  0 grows   2 shrinks
+SGA Target             start 8192 MB  now 8192 MB  0 grows   0 shrinks
+DEFAULT buffer cache   start 4720 MB  now   96 MB  2 grows  297 shrinks
+                       range   96 MB  to  4864 MB
+PGA Target             start 8192 MB  now 8192 MB  0 grows   0 shrinks
+
+Session Wait History:
+    elapsed time of 0.089063 sec since last wait
+0: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179024 seq_num=48020 snap_id=26
+    wait times: snap=0.000000 sec, exc=2.498378 sec, total=2.499752 sec
+    wait times: max=infinite
+    wait counts: calls=25 os=25
+    occurred after 0.000000 sec of elapsed time
+1: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179049 seq_num=48019 snap_id=1
+    wait times: snap=0.000081 sec, exc=0.000081 sec, total=0.000081 sec
+    wait times: max=infinite
+    wait counts: calls=1 os=1
+    occurred after 0.000000 sec of elapsed time
+2: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179024 seq_num=48018 snap_id=25
+    wait times: snap=0.099963 sec, exc=2.498378 sec, total=2.499671 sec
+    wait times: max=infinite
+    wait counts: calls=25 os=25
+    occurred after 0.000000 sec of elapsed time
+3: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179048 seq_num=48017 snap_id=1
+    wait times: snap=0.000065 sec, exc=0.000065 sec, total=0.000065 sec
+    wait times: max=infinite
+    wait counts: calls=1 os=1
+    occurred after 0.000000 sec of elapsed time
+4: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179024 seq_num=48016 snap_id=24
+    wait times: snap=0.099994 sec, exc=2.398415 sec, total=2.399643 sec
+    wait times: max=infinite
+    wait counts: calls=24 os=24
+    occurred after 0.000000 sec of elapsed time
+5: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179047 seq_num=48015 snap_id=1
+    wait times: snap=0.000042 sec, exc=0.000042 sec, total=0.000042 sec
+    wait times: max=infinite
+    wait counts: calls=1 os=1
+    occurred after 0.000000 sec of elapsed time
+6: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179024 seq_num=48014 snap_id=23
+    wait times: snap=0.099939 sec, exc=2.298421 sec, total=2.299607 sec
+    wait times: max=infinite
+    wait counts: calls=23 os=23
+    occurred after 0.000000 sec of elapsed time
+7: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179046 seq_num=48013 snap_id=1
+    wait times: snap=0.000039 sec, exc=0.000039 sec, total=0.000039 sec
+    wait times: max=infinite
+    wait counts: calls=1 os=1
+    occurred after 0.000000 sec of elapsed time
+8: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179024 seq_num=48012 snap_id=22
+    wait times: snap=0.099988 sec, exc=2.198482 sec, total=2.199629 sec
+    wait times: max=infinite
+    wait counts: calls=22 os=22
+    occurred after 0.000000 sec of elapsed time
+9: waited for 'SGA: allocation forcing component growth'
+    =0x0, =0x0, =0x0
+    wait_id=179045 seq_num=48011 snap_id=1
+    wait times: snap=0.000037 sec, exc=0.000037 sec, total=0.000037 sec
+    wait times: max=infinite
+    wait counts: calls=1 os=1
+
+Subpoollara baktığımızda 3. subpoolda “ges resource dynamic” memory kullanımının yüksek olduğu görülüyor.
+
+==============================================
+TOP 10 MAXIMUM MEMORY USES FOR SGA HEAP SUB POOL 1
+----------------------------------------------
+"free memory                    "   600 MB 
+"ges resource dynamic           "   490 MB 
+"ges enqueues                   "   355 MB 
+"init_heap_kfsg                 "   196 MB 
+"gc index split transactio      "    83 MB 
+"KGLH0                          "    60 MB 
+"ASH buffers                    "    47 MB 
+"Sort Segment extent descr      "    47 MB 
+"SQLA                           "    40 MB 
+"gcs resources                  "    33 MB 
+==============================================
+
+
+==============================================
+TOP 10 MAXIMUM MEMORY USES FOR SGA HEAP SUB POOL 2
+----------------------------------------------
+"ges enqueues                   "   355 MB 
+"ges resource dynamic           "   261 MB 
+"free memory                    "   244 MB 
+"gc index split transactio      "    86 MB 
+"KGLH0                          "    57 MB 
+"gcs resources                  "    51 MB 
+"ASH buffers                    "    48 MB 
+"gcs shadows                    "    42 MB 
+"SQLA                           "    41 MB 
+"ges resource permanent         "    25 MB 
+==============================================
+
+TOP 10 MAXIMUM MEMORY USES FOR SGA HEAP SUB POOL 3
+----------------------------------------------
+"ges resource dynamic           "  1709 MB 
+"free memory                    "   494 MB 
+"ges enqueues                   "   355 MB 
+"KGLH0                          "    90 MB 
+"gc index split transactio      "    83 MB 
+"SQLA                           "    57 MB 
+"ASH buffers                    "    48 MB 
+"gcs resources                  "    46 MB 
+"SQLP                           "    41 MB 
+"gcs shadows                    "    38 MB 
+TOTALS ---------------------------------------
+Total free memory                   653 MB
+Total memory alloc.                5219 MB
+Grand total                        5872 MB
+==============================================
+
+Ayrıca problem saatlerinde çok fazla invalidations ve reloads var. 
+
+LIBRARY CACHE STATISTICS:
+namespace           gets hit ratio      pins hit ratio    reloads   invalids
+-------------- --------- --------- --------- --------- ---------- ----------
+SQL AREA        96096695     0.338 2050332028     0.995     444711     229480
+TABLE/PROCEDURE 146141501     0.997 222963667     0.992     693837        197
+BODY            10500913     0.999  32524121     0.999       7480         19
+TRIGGER          6730402     0.998   9301774     0.998       1406          0
+INDEX          203758067     1.000    193499     0.762      16870          0
+CLUSTER           152612     0.986    155153     0.986          3          0
+
+Aşağıdaki buga benzer bir durum var bug şu an incelenmeye devam ediyor. Buradaki workaroundları yapabiliriz. Fakat bug harici sga de küçük görünüyor. Bug mı sebep oluyor yoksa çok fazla ddl mi yapıldı AWRler de alınamadığı için tam emin olamıyorum. Bu sebeple workaroundlarla birlikte sga de arttıralım. Sga size şu an 8G. Bunu 16G gibi bir değere çıkaralım. Ek olarak shared_pool_size ve buffer_cache için alt sınırları belirlemekte de fayda var. Çünkü problem yaşandığı sıralarda buffer cachede neredeyse memory kalmamış. 
+
+SOLUTION
+Please check our analysis.
+
+1. Please look into the root cause why ORA-29771 occurred. 
+The root cause for ORA-28771 is , ORA-04031 errors occurring with high memory utilization for "ges resource dynamic" memory allocations. 
+
+2. Please look into the reason why d1ev2 was not responding.
+SHARED POOL EXHAUSTION
+
+3. The root cause of instance2 down.
+SHARED POOL EXHAUSTION
+
+
+The below bug is matching your case, which is still under development.
+
+Bug 27899270 https://bug.oraclecorp.com/pls/bug/webbug_edit.edit_info_top?rptno=27899270 : 12.2 GES RESOURCE DYNAMIC IS TOO HIGH - LEADS TO SHARED POOL EXHAUSTION
+
+Workaround
+===========
+
+The bug engineer provided below workaround as of now.
+
+_lm_share_lock_opt = FALSE
+
+_ges_direct_free_res_type="QQFB"
