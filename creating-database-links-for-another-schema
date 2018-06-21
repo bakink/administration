@@ -1,0 +1,30 @@
+
+--http://marcel.vandewaters.nl/oracle/database-oracle/creating-database-links-for-another-schema
+DECLARE
+  lv_stmt	VARCHAR2(200);
+
+  PROCEDURE run_sql_as(p_user IN VARCHAR2, p_statement IN VARCHAR2) IS
+    lv_userid		NUMBER;
+	lv_cursor		NUMBER;
+	lv_result		NUMBER;
+  BEGIN
+	-- Get USER_ID for specified user
+	SELECT user_id INTO lv_userid FROM dba_users WHERE username = p_user;
+
+	-- Open, parse, execute and close
+	lv_cursor := sys.dbms_sys_sql.open_cursor;
+	sys.dbms_sys_sql.parse_as_user(lv_cursor, p_statement, dbms_sql.native, lv_userid, TRUE);
+	lv_result := sys.dbms_sys_sql.execute(lv_cursor);
+	sys.dbms_sys_sql.close_cursor(lv_cursor);
+  EXCEPTION
+	WHEN OTHERS THEN
+	  DBMS_OUTPUT.PUT_LINE('Failed to execute the specified statement for user: '||p_user);
+	  DBMS_OUTPUT.PUT_LINE(SUBSTR(SQLERRM, 1, 100));
+  END;
+
+BEGIN
+  run_sql_as('SOMEUSER','DROP DATABASE LINK testlink3');
+  lv_stmt := 'CREATE DATABASE LINK testlink3 CONNECT TO someuser IDENTIFIED BY somepwd USING ''somehost''';
+  run_sql_as('SOMEUSER',lv_stmt);
+END;
+/
