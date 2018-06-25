@@ -1,5 +1,6 @@
 
 --ORA-04031 Errors Occurring with High "ges resource dynamic" & "ges enqueues" Memory Usage In The Shared Pool (Doc ID 2063751.1)
+--https://blog.tanelpoder.com/2009/06/04/ora-04031-errors-and-monitoring-shared-pool-subpool-memory-utilization-with-sgastatxsql/
 
 select * from GV$SGASTAT
 where pool ='shared pool'
