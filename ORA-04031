@@ -6,6 +6,35 @@ select * from GV$SGASTAT
 where pool ='shared pool'
 order by bytes desc
 
+--sub pools
+set pages 10000
+COL subpool HEAD SUBPOOL FOR a27
+BREAK ON subpool SKIP 1
+
+SELECT
+   subpool
+, name
+, SUM(bytes)                  
+ , ROUND(SUM(bytes)/1048576,2) MB
+FROM (
+   SELECT
+       'shared pool ('||DECODE(TO_CHAR(ksmdsidx),'0','0-Unused'
+     ,ksmdsidx)||'):'      subpool
+     , ksmssnam      name
+     , ksmsslen      bytes
+   FROM
+       x$ksmss
+   WHERE
+       ksmsslen > 0
+   AND ksmsslen > 5000000
+)
+GROUP BY
+   subpool
+, name
+ORDER BY
+   subpool    ASC
+, SUM(bytes) DESC;
+
 
 Problemle ilgili inceleme aşağıda;
 
