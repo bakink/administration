@@ -1,0 +1,16 @@
+
+srvctl stop database -d DWHPROD -o immediate
+srvctl status database -d DWHPROD
+srvctl start database -d DWHPROD -o mount
+srvctl status database -d DWHPROD
+
+sqlplus / as sysdba
+select instance_name,status from gv$instance;
+archive log list;
+alter database archivelog;
+
+srvctl stop database -d DWHPROD -o immediate
+srvctl start database -d DWHPROD
+
+sqlplus / as sysdba
+archive log list;
