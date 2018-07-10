@@ -1,7 +1,16 @@
 
 --ORA-04031 Errors Occurring with High "ges resource dynamic" & "ges enqueues" Memory Usage In The Shared Pool (Doc ID 2063751.1)
 --https://blog.tanelpoder.com/2009/06/04/ora-04031-errors-and-monitoring-shared-pool-subpool-memory-utilization-with-sgastatxsql/
+--http://www.ora-solutions.net/web/2017/09/03/ora-4031-troubleshooting-issue-with-durations-in-11gr2/
+--https://mahmoudhatem.wordpress.com/2015/04/22/oracle-12c-shared-pool-and-durations-enhancement/
+--https://blog.tanelpoder.com/2009/01/02/oracle-memory-troubleshooting-part-1-heapdump-analyzer/
+--http://www.juliandyke.com/Diagnostics/Dumps/Dumps.php
 
+select * from (
+    select name, bytes from v$sgastat where pool ='shared pool' order by 2 desc
+    )
+    where rownum <11;
+  
 select * from GV$SGASTAT
 where pool ='shared pool'
 order by bytes desc
@@ -242,3 +251,64 @@ The bug engineer provided below workaround as of now.
 _lm_share_lock_opt = FALSE
 
 _ges_direct_free_res_type="QQFB"
+
+
+************************************************
+
+Selamlar,
+
+Özellikle 4031 hataları aldığımız zamanlarda, şu aşağıdaki sorguyu çalıştırıp sonuçlarını almak gerekiyor, sorunu tespit etmede yardımcı olması açısından, elinizin altında olsun :
+
+
+set lines 200 pages 900
+
+select inst_id, name, round(bytes/(1024*1024*1024),1) in_gb from gv$sgastat where name = 'ges resource dynamic'; 
+
+select inst_id, name, round(bytes/(1024*1024*1024),1) in_gb from  gv$sgastat where name = 'ges enqueues'; 
+
+
+SELECT subpool,
+         name,
+        SUM (bytes),
+         ROUND (SUM (bytes) / 1048576, 2) MB
+    FROM (SELECT    'shared pool ('
+                 || DECODE (TO_CHAR (ksmdsidx), '0', '0-Unused', ksmdsidx)
+                 || '):'
+                     subpool,
+                 ksmssnam
+                     name,
+                 ksmsslen
+                     bytes
+            FROM x$ksmss
+           WHERE ksmsslen > 0 AND ksmsslen > 5000000)
+GROUP BY subpool, name
+ORDER BY subpool ASC, SUM (bytes) DESC;
+
+
+Ges durumundan şüphelendiğimiz zamanlarda set ettiğimiz parametreler de şunlar :
+
+
+alter system set "_lm_share_lock_opt" = FALSE scope=both SID='*';
+alter system set "_ges_direct_free_res_type"="QQFBBL" scope=both SID='*';
+alter system set "_memory_imm_mode_without_autosga"=FALSE scope=both SID='*';   
+alter system set "_enable_shared_pool_durations" = FALSE scope=both SID='*';
+alter system set "_clusterwide_global_transactions" = FALSE scope=both SID='*';
+
+
+Parametreler şu anda başarılı gibi görünüyor ancak, sorunu çözmediğinden emin olduğumuz durumda, şu patch’I geçmemiz gerekecek :
+
+
+Bug 26405036 : VERY HIGH "GES ENQUEUES" ON THE SHARED POOL
+
+
+Bigilerinize,
+
+Saygılarımla
+
+******************************************************
+
+
+
+https://mahmoudhatem.wordpress.com/2015/04/22/oracle-12c-shared-pool-and-durations-enhancement/
+
+
