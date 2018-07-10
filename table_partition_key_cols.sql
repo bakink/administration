@@ -13,3 +13,8 @@ where tp.table_owner=pt.owner and tp.table_name=pt.table_name and tp.table_owner
 group by tp.table_owner,tp.table_name,pt.partitioning_type,pt.SUBPARTITIONING_TYPE,pt.interval 
 order by 6 desc;
 
+
+**** partition modify default atributes
+
+select 'alter table '||owner||'.'||table_name||' modify default attributes tablespace  AZS_LOG_DATA_TS4;' from dba_part_tables where def_tablespace_name='AZS_LOG_DATA_TS1'
+select 'alter table '||table_owner||'.'||table_name||' modify default attributes lob('||column_name||') (tablespace  AZS_LOG_DATA_TS4);' from dba_part_lobs  where def_tablespace_name='AZS_LOG_DATA_TS1'
