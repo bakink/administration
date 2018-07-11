@@ -10,7 +10,13 @@ select * from (
     select name, bytes from v$sgastat where pool ='shared pool' order by 2 desc
     )
     where rownum <11;
-  
+
+select inst_id,substr(name,1,140), sum(sharable_mem), count(*)
+from gv$db_object_cache where inst_id =1 and sharable_mem<>0
+group by inst_id,substr(name,1,140)
+having count(*)>50
+order by sum(sharable_mem) desc
+
 select * from GV$SGASTAT
 where pool ='shared pool'
 order by bytes desc
