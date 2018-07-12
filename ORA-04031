@@ -317,4 +317,17 @@ Saygılarımla
 
 https://mahmoudhatem.wordpress.com/2015/04/22/oracle-12c-shared-pool-and-durations-enhancement/
 
+--Bug 21373473 - Excess "ges resource dynamic" memory use / ORA-4031 / instance crash in RAC with many distributed transactions / XA (Doc ID 21373473.8)
+
+ if "ges resource dynamic" is using a lot of memory. If so, run the query
+   select substr(RESOURCE_NAME,instr(RESOURCE_NAME,'[',1,3)+1,2) ,
+       MASTER_NODE, count(*)
+    from gv$ges_resource
+    where substr(RESOURCE_NAME,instr(RESOURCE_NAME,'[',1,3)+1,2) in ('DX','BB')
+    group by substr(RESOURCE_NAME,instr(RESOURCE_NAME,'[',1,3)+1,2),
+	   MASTER_NODE
+  order by 3 desc;
+ If that shows a large number of entries (much larger than the expected total
+ number of transactions), then this fix will help.
+
 
