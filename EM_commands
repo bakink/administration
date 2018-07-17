@@ -1,0 +1,4 @@
+
+--agent status/stop/start
+/opt/em.agent/agent_inst/bin/emctl status agent 
+/opt/em.agent/agent_inst/bin/emctl start agent
