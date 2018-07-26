@@ -2,3 +2,24 @@
 --agent status/stop/start
 /opt/em.agent/agent_inst/bin/emctl status agent 
 /opt/em.agent/agent_inst/bin/emctl start agent
+
+----https://jhdba.wordpress.com/2018/07/11/12c-grid-geno-process-causes-high-cpu-usage/
+--This SQL is a useful way to identify which servers require patching assuming you are using OEM
+
+select
+host_name,
+home_name,
+home_location
+patch_id,
+install_timestamp,
+description</span>
+from sysman."MGMT$SOFTWARE_ONEOFF_PATCHES"
+where
+host_name not in (
+select host_name 
+from sysman."MGMT$SOFTWARE_ONEOFF_PATCHES"
+where patch_id in ('22291127','20373598'))
+and home_location like '%12%grid'
+and description like '%Database Patch Set Update%'
+order by 1,4
+;
