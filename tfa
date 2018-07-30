@@ -1,0 +1,15 @@
+
+
+<GRID_HOME>/bin/tfactl diagcollect -all -from “Jan/23/2017 00:04:00” -to “Jan/23/2017 09:00:00” -tag <bir_tag_ismi>
+
+TFA Collector - TFA with Database Support Tools Bundle (Doc ID 1513912.1)
+
+--TFA example:
+/u01/app/12.2.0.1/grid/bin/tfactl diagcollect -all -from "Jul/26/2018 14:00:00" -to "Jul/26/2018 15:00:00" -tag TFA_4031 -database DWHPROD 
+
+
+alzx7dbadm02@DWHPROD2|~]$adrci
+adrci> show homes
+adrci> set home diag/rdbms/dwhprod/DWHPROD2
+adrci> show problem -p "problem_key='ORA 4031'"
+adrci> show incident -p "PROBLEM_KEY='ORA 4031'"    
