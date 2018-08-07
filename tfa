@@ -7,6 +7,9 @@ TFA Collector - TFA with Database Support Tools Bundle (Doc ID 1513912.1)
 --TFA example:
 /u01/app/12.2.0.1/grid/bin/tfactl diagcollect -all -from "Jul/26/2018 14:00:00" -to "Jul/26/2018 15:00:00" -tag TFA_4031 -database DWHPROD 
 
+As ROOT, execute 
+
+<GRID_HOME>tfa/bin/tfactl diagcollect -all -from "Aug/07/2018 01:00:00" -to "Aug/07/2018 09:00:00" 
 
 alzx7dbadm02@DWHPROD2|~]$adrci
 adrci> show homes
