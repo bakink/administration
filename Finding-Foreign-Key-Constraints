@@ -1,0 +1,12 @@
+
+
+--https://www.databasejournal.com/features/oracle/article.php/3665591/Finding-Foreign-Key-Constraints-in-Oracle.htm
+
+select 'alter table '||a.owner||'.'||a.table_name||
+  ' disable constraint '||a.constraint_name||';'
+  from all_constraints a, all_constraints b
+  where a.constraint_type = 'R'
+  and a.r_constraint_name = b.constraint_name
+  and a.r_owner  = b.owner
+  and b.table_name = 'SEC_SYSTEM_USERS';
+  
