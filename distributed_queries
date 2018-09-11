@@ -1,0 +1,3 @@
+
+select 'rollback force '''|| local_tran_id||''';' from dba_2pc_pending;
+select 'execute dbms_transaction.purge_lost_db_entry('''|| local_tran_id||''');'||chr(13)||'commit;' from dba_2pc_pending;
