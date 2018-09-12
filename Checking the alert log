@@ -1,0 +1,54 @@
+
+--https://chandlerdba.com/2015/01/06/checking-the-alert-log-the-easy-way/
+
+#!/bin/bash
+#########################################################################################
+# Description: Read each Oracle Home directory. Run adrci matching for problems
+# Author : N Chandler.2014-03-28
+#
+# crontab : # Check Alert Log 30.03.2014
+# 00,30 * * * * /opt/oracle/bin/adrci_alert.sh > /opt/oracle/bin/log/adrci.cron.log 2>&1
+#
+#########################################################################################
+# Which HOME?
+ export ORACLE_HOME=/opt/app/oracle/product/11g
+ export DIAG_LOC=/opt/app/oracle/diag/rdbms
+# Who gets the alert?
+ export RECIPIENT='neil@chandler.uk.com'
+# Other Variables
+ export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+ export HOST=`hostname`
+ export PATH=$ORACLE_HOME/bin:$PATH
+ export NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss'
+ export SUBJECT="Oracle ALERTS on ${HOST} OK"
+ export LOG=/tmp
+ export ALERT=$LOG/error.txt
+
+# Write the alert log message header for the email
+ echo "${HOST} `date +%Y-%m-%d.%H:%M:%S-%Z`" > ${ALERT}
+ echo "All alerts in ADRCI Alert log for the last 30 minutes" >> ${ALERT}
+ echo "THIS ALERT WILL NOT BE REPEATED!!! TAKE ACTION NOW!!!" >> ${ALERT}
+ echo "Follow-up on this email and check the alert log on ${HOST}" >> ${ALERT}
+
+# find out the homes
+ adrci_homes=( $(adrci exec="show homes" | grep -e rdbms -e asm))
+
+# run through Each home found and examine the alert log
+# Here we are looking for ORA- messges, Deadlock, anything which raises an incident or anything which is instance-level
+# IN THE LAST 30 MINUTES (1/48), so we need to run this code every 30 minutes or we may miss something. 
+ for adrci_home in ${adrci_homes[@]}
+ do
+   echo "Checking: ${adrci_home}" >> ${ALERT}
+   echo $adrci_home' Alert Log' >> ${ALERT}
+   adrci exec="set home ${adrci_home} ; show alert -p \\\"(message_text like '%ORA-%' or message_text like '%Deadlock%' or message_text like '%instance%' or message_text like '%incident%') and originating_timestamp>=systimestamp-(1/48) \\\"" -term >>${ALERT}
+ done
+# count the errors. This is a good place to exclude specific errors you wish to ignore with a -v match.
+# note - your grep must be aligned with the pattern match above for this to work
+num_errors=`grep -c -e 'TNS' -e 'ORA' -e 'Deadlock' -e 'instance' -e 'incident' ${ALERT} | grep -v 'ORA-28'`
+
+# If there are any errors, lets email the alert information to someone
+if [ $num_errors -gt 0 ]
+then
+  SUBJECT="ERROR in Oracle ALERT log on ${HOST}"
+  mail -s "${SUBJECT}" ${RECIPIENT} < ${ALERT}
+fi
