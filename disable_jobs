@@ -1,0 +1,9 @@
+BEGIN
+  FOR x IN (SELECT * FROM dba_jobs WHERE log_user<>'STUDENT1')
+  LOOP
+     DBMS_IJOB.broken( x.job, true );
+  END LOOP;
+END;
+/
+ 
+COMMIT;
