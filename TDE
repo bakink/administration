@@ -1,0 +1,429 @@
+
+--http://netsoftmate.blogspot.com/2018/09/oracle-transparent-data-encryption-on-Exadata.html
+
+Oracle Transparent Data Encryption (TDE) On Exadata
+Oracle Transparent Data Encryption (TDE) enables the organizations to encrypt sensitive application data on storage media completely transparent to the application. TDE protects the data at rest. TDE encrypts the data in the datafiles so that in case they are obtained by hacker or theft it will not be possible to access the clear text data. In the databases where TDE is configured any user who has access on an encrypted table will be able to see the data in clear text because Oracle will transparently decrypt the data for any user having the necessary privileges. Oracle TDE is available by default in Oracle RDBMS Enteprise Edition. To be able to use this it is necessary to purchase an Oracle Advanced Security license.
+
+
+In this article we will demonstrate how to implement TDE on Exadata Database Machine to protect sensitive data. Here we are setting up TDE for multiple database running on the same cluster. However same steps are valid for one single database as well.
+
+
+Steps to configure or implement TDE
+
+
+Step 1: Create Directories and Grant File Permissions
+
+# dcli -g ~/dbs_group -l root mkdir -p /etc/oracle/wallets/
+
+#dcli -g ~/dbs_group -l root -s "-q" 'ls -l /etc/oracle/wallets'
+
+#dcli -g ~/dbs_group -l root 'cd /etc/oracle/wallets;ls -l'
+
+#dcli -g ~/dbs_group -l root 'cd /etc;chown -R oracle:oinstall oracle'
+
+#dcli -g ~/dbs_group -l root 'cd /etc;chmod -R 700 oracle'
+
+#dcli -g ~/dbs_group -l oracle 'cd /etc/oracle/wallets;mkdir orcldb'
+
+#dcli -g ~/dbs_group -l oracle 'cd /etc/oracle/wallets;mkdir nsmdb'
+
+
+Step 2: Set the ENCRYPTION_WALLET_LOCATION parameter in sqlnet.ora to the newly created directory.
+
+- backup the sqlnet.ora file on all the nodes
+
+$ dcli -g ~/dbs_group -l oracle 'cd /u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin;cp sqlnet.ora sqlnet.ora_bkp'
+
+$ dcli -g ~/dbs_group -l oracle 'cd /u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin;ls -l sqlnet.ora*'
+
+- Update the sqlnet.ora on node 1 add the below line to the sqlnet.ora file
+
+$ cd /u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin
+$ vi sqlnet.ora
+
+ENCRYPTION_WALLET_LOCATION = (SOURCE = (METHOD = FILE) (METHOD_DATA = (DIRECTORY = /etc/oracle/wallets/$ORACLE_UNQNAME/)))
+
+
+Step 3: Copy sqlnet.ora to all the nodes from node 1
+
+dm01db01-nsmdb1 {/home/oracle}:scp sqlnet.ora oracle@dm01db02:/u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin/
+
+dm01db01-nsmdb1 {/home/oracle}:dcli -g ~/dbs_group -l oracle 'cd /u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin;ls -l sqlnet.ora'
+
+- Verify the contents of sqlnet.ora on all the nodes:
+
+dm01db01-nsmdb1 {/home/oracle}:dcli -g ~/dbs_group -l oracle 'cd /u01/app/oracle/product/11.2.0.4/dbhome_1/network/admin;cat sqlnet.ora'
+
+
+Step 4: Initialize the wallet and add the master encryption key using the SQL*Plus command line interface:
+
+ **************************VERY VERY IMPORTANT **************************
+
+AT THE OS PROMPT SET THE ENVIRONMENT VARIABLE export ORACLE_UNQNAME=orcldb
+
+dm01db01-nsmdb1 {/home/oracle}:export ORACLE_UNQNAME=orcldb
+
+dm01db01-nsmdb1 {/home/oracle}: sqlplus / as sysdba
+
+SQL> col WRL_PARAMETER for a60
+SQL> set lines 200
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+
+8 rows selected.
+
+SQL> alter system set encryption key identified by "welcom1";
+
+System altered.
+
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+
+
+Step 5: Copy the wallet file ewallet.p12 to all the nodes:
+
+dm01db01-orcldb1 {/home/oracle}:cd /etc/oracle/wallets/orcldb/
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:ls -ltr
+total 8
+-rw------- 1 oracle oinstall 1837 Feb 22 08:28 ewallet.p12_20130226
+-rw-r--r-- 1 oracle oinstall 1309 Feb 26 05:14 ewallet.p12
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:scp ewallet.p12 oracle@dm01db02:/etc/oracle/wallets/orcldb/
+ewallet.p12                                                 100% 1309     1.3KB/s   00:00
+
+
+Step 6: verify at the wallet is opened on all the nodes. This is the default behavior after you copy the wallet file to all the nodes
+
+dm01db01-nsmdb1 {/home/oracle}: sqlplus / as sysdba
+
+SQL> col WRL_PARAMETER for a60
+SQL> set lines 200
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+
+8 rows selected.
+
+
+- IF FOR SOME REASON IF THE WALLET IS NOT OPENED, FOLLOW THE BELOW STEPS
+
+A) set the variable
+export ORACLE_UNQNAME=orcldb
+
+B) login to the database
+sqlplus / as sysdba
+
+c) open the wallet
+ALTER SYSTEM SET WALLET OPEN IDENTIFIED BY "welcome1";
+
+D) Repeat the A,B and C for all the instances in the cluster.
+
+
+Step 7: Whenever you bounce the database you must open the wallet manually as follows:
+
+dm01db02-orcldb2 {/home/oracle}:srvctl stop database -d orcldb
+dm01db01-orcldb1 {/home/oracle}:srvctl start database -d orcldb
+
+dm01db01-orcldb1 {/home/oracle}:export ORACLE_UNQNAME=orcldb
+dm01db01-orcldb1 {/home/oracle}:sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.4.0 Production on Tue Feb 26 05:23:02 2013
+
+Copyright (c) 1982, 2011, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+SQL> select name,open_mode,database_role from gv$database;
+
+NAME      OPEN_MODE            DATABASE_ROLE
+--------- -------------------- ----------------
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+orcldb   READ WRITE           PRIMARY
+
+8 rows selected.
+
+SQL> col WRL_PARAMETER for a60
+SQL> set lines 200
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         CLOSED
+
+8 rows selected.
+
+
+SQL> ALTER SYSTEM SET WALLET OPEN IDENTIFIED BY "welcome1";
+
+System altered.
+
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+
+8 rows selected.
+
+
+Step 8:  Making the wallet Auto-Login. If you have a auto-login wallet you don't need to open the wallet after a database bounce. This is done automatic for you.
+
+dm01db01-orcldb1 {/home/oracle} export ORACLE_UNQNAME=orcldb
+   
+dm01db01-orcldb1 {/home/oracle}:ls -l /etc/oracle/wallets/$ORACLE_UNQNAME
+total 8
+-rw-r--r-- 1 oracle oinstall 1309 Feb 26 05:14 ewallet.p12
+
+dm01db01-orcldb1 {/home/oracle}:orapki wallet create -wallet /etc/oracle/wallets/$ORACLE_UNQNAME -auto_login
+Oracle PKI Tool : Version 11.2.0.4.0 - Production
+Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+
+Enter wallet password:
+
+dm01db01-orcldb1 {/home/oracle}:ls -l /etc/oracle/wallets/$ORACLE_UNQNAME
+total 12
+-rw------- 1 oracle oinstall 1387 Feb 26 05:26 cwallet.sso
+-rw-r--r-- 1 oracle oinstall 1309 Feb 26 05:14 ewallet.p12
+
+dm01db01-orcldb1 {/home/oracle}:cd /etc/oracle/wallets/orcldb/
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:ls -ltr
+total 12
+-rw-r--r-- 1 oracle oinstall 1309 Feb 26 05:14 ewallet.p12
+-rw------- 1 oracle oinstall 1387 Feb 26 05:26 cwallet.sso
+
+- Copy the cwallet.sso to all the nodes:
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:scp cwallet.sso oracle@dm01db02:/etc/oracle/wallets/orcldb/
+
+cwallet.sso                                  100% 1387     1.4KB/s   00:00
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.4.0 Production on Tue Feb 26 05:28:26 2013
+
+Copyright (c) 1982, 2011, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+SQL> col WRL_PARAMETER for a60
+SQL> set lines 200
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+
+8 rows selected.
+
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+- Verify that the wallet is opened following a database bounce:
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:srvctl stop database -d orcldb
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:srvctl start database -d orcldb
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:srvctl status database -d orcldb
+Instance orcldb1 is running on node dm01db01
+Instance orcldb2 is running on node dm01db02
+Instance orcldb3 is running on node dm01db03
+Instance orcldb4 is running on node dm01db04
+Instance orcldb5 is running on node dm01db05
+Instance orcldb6 is running on node dm01db06
+Instance orcldb7 is running on node dm01db07
+Instance orcldb8 is running on node dm01db08
+
+dm01db01-orcldb1 {/etc/oracle/wallets/orcldb}:sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.4.0 Production on Tue Feb 26 05:32:19 2013
+
+Copyright (c) 1982, 2011, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, Real Application Clusters, Automatic Storage Management, OLAP,
+Data Mining and Real Application Testing options
+
+SQL> col WRL_PARAMETER for a60
+SQL> set lines 200
+SQL> select * from gv$encryption_wallet order by 1;
+
+   INST_ID WRL_TYPE             WRL_PARAMETER                                                STATUS
+---------- -------------------- ------------------------------------------------------------ ------------------
+         1 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         2 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         3 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         4 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         5 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         6 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         7 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+         8 file                 /etc/oracle/wallets/$ORACLE_UNQNAME/                         OPEN
+
+8 rows selected.
+
+
+############ REAPEAT THE SAME STEPS FOR ALL THE DATABASES #############
+
+
+Testing Tablespace Encryption (TSE)
+
+Step 1: Create an Encrypted tablespace and grant the users permissions on the tablespace
+
+SQL> CREATE TABLESPACE enc_tbs DATAFILE '+DATA' SIZE 1000M ENCRYPTION USING 'AES256' DEFAULT STORAGE(ENCRYPT);
+
+Tablespace created.
+
+SQL> select TABLESPACE_NAME, ENCRYPTED from dba_tablespaces where tablespace_name in ('USERS','ENC_TBS') order by 1;
+
+TABLESPACE_NAME                ENC
+------------------------------ ---
+ENC_TBS                        YES
+USERS                          NO
+
+
+SQL> select TABLESPACE_NAME, FILE_NAME from dba_data_files where TABLESPACE_NAME in ('USERS','ENC_TBS');
+
+TABLESPACE_NAME   FILE_NAME
+------------------------------ ------------------------------
+USERS    +DATA/nsmdb/datafile/users.529.762113429
+ENC_TBS    +DATA/nsmdb/datafile/enc_tbs.540.804301513
+
+
+SQL> alter user test quota unlimited on  ENC_TBS;
+
+User altered.
+
+SQL> alter user test quota unlimited on  USERS;
+
+User altered.
+
+
+Step 2: Create tables in encypted and non-encrypted tablespaces
+
+SQL> create table test.nonenc(data varchar2(100)) tablespace users;
+
+Table created.
+
+SQL> insert into test.nonenc values ('ABCDEFGHIJKLMNOPQRSTUVWZYZ');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+
+SQL> create table test.encrypted(data varchar2(100)) tablespace enc_tbs;
+
+Table created.
+
+SQL> insert into test.encrypted values ('ABCDEFGHIJKLMNOPQRSTUVWZYZ');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> alter system checkpoint;
+
+System altered.
+
+
+Step 3: Verify that the data is encrypted
+
+dm01db01-nsmdb1 {/u01/dba}:asm
+
+dm01db01-+ASM1 {/u01/dba}:asmcmd -p
+ASMCMD [+] > cd +DATA/NSMDB/DATA*
+ASMCMD [+DATA/NSMDB/DATAFILE] > ls -l
+
+ASMCMD [+DATA/NSMDB/DATAFILE] > cp USERS.529.762113429 /u01/dba/
+copying +DATA/NSMDB/DATAFILE/USERS.529.762113429 -> /u01/dba//USERS.529.762113429
+
+ASMCMD [+DATA/NSMDB/DATAFILE] > cp ENC_TBS.540.804301513 /u01/dba/
+copying +DATA/NSMDB/DATAFILE/ENC_TBS.540.804301513 -> /u01/dba//ENC_TBS.540.804301513
+
+dm01db01-+ASM1 {/u01/dba}:ls -ltr
+-rw-r----- 1 oracle oinstall  703602688 Jan 10 01:30 USERS.529.762113429
+-rw-r----- 1 oracle oinstall 1048584192 Jan 10 01:31 ENC_TBS.540.804301513
+
+
+dm01db01-nsmdb1 {/u01/dba}:strings /u01/dba/USERS.529.762113429 | grep ABCD
+89:;<=>?@ABCDEFGHIJKLMNOPQR|STUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWZYZ
+
+dm01db01-nsmdb1 {/u01/dba}:strings /u01/dba/ENC_TBS.540.804301513 | grep ABCD
+
+- From the above 2 string commands it is clear that the tablespace encryption is indeed working for us.
+
+
+Conclusion
+
+In this article we have learned how to encrypt sensitive data using Transparent Data Encryption (TDE). TDE protects the data at rest. In the databases where TDE is configured any user who has access on an encrypted table will be able to see the data in clear text because Oracle will transparently decrypt the data for any user having the necessary privileges.
