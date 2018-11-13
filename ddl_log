@@ -1,0 +1,91 @@
+
+CREATE TABLE ALZADMIN.DDL_LOG
+(
+  USERNAME      VARCHAR2(30 BYTE),
+  OSUSER        VARCHAR2(30 BYTE),
+  HOSTNAME      VARCHAR2(50 BYTE),
+  TERMINAL      VARCHAR2(50 BYTE),
+  IP_ADDRESS    VARCHAR2(30 BYTE),
+  DDL_DATE      TIMESTAMP(3),
+  DDL_TYPE      VARCHAR2(30 BYTE),
+  OBJECT_TYPE   VARCHAR2(18 BYTE),
+  OBJECT_OWNER  VARCHAR2(30 BYTE),
+  OBJECT_NAME   VARCHAR2(128 BYTE),
+  SQL_TEXT      CLOB,
+  INST_ID       NUMBER,
+  SID           NUMBER
+)
+LOB (SQL_TEXT) STORE AS (
+  TABLESPACE  AZS_TMPERR_DATA_TS
+  ENABLE      STORAGE IN ROW
+  CHUNK       8192
+  RETENTION)
+TABLESPACE AZS_TMPERR_DATA_TS
+NOCOMPRESS 
+NOPARALLEL
+MONITORING;
+
+
+CREATE INDEX ALZADMIN.DDL_LOG_IDX1 ON ALZADMIN.DDL_LOG
+(TRUNC("DDL_DATE"))
+TABLESPACE AZS_TMPERR_DATA_TS
+NOPARALLEL;
+
+CREATE INDEX ALZADMIN.DDL_LOG_IDX2 ON ALZADMIN.DDL_LOG
+(OBJECT_NAME)
+TABLESPACE AZS_TMPERR_DATA_TS
+NOPARALLEL;
+
+GRANT SELECT ON ALZADMIN.DDL_LOG TO CUSTOMER;
+
+GRANT SELECT ON ALZADMIN.DDL_LOG TO PUBLIC;
+
+
+CREATE OR REPLACE TRIGGER SYS.DDL_TRIGGER
+after ddl on database
+DECLARE
+ cnt binary_integer;
+ v_stmt clob;
+ sql_text ora_name_list_t;
+ PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    cnt := ora_sql_txt(sql_text);
+--if (substr(UPPER(TRIM(sql_text(1))),1,5) <> 'ALTER' and INSTR(UPPER(TRIM(sql_text(1))),' ALTER ')=0) OR 
+--   (INSTR(UPPER(TRIM(sql_text(1))),' COMPILE')=0 and INSTR(UPPER(TRIM(sql_text(1))),' ENABLE')=0 and INSTR(UPPER(TRIM(sql_text(1))),' DISABLE')=0)then 
+    FOR i IN 1..cnt LOOP
+       v_stmt := v_stmt || sql_text(i);
+    END LOOP;
+  INSERT INTO alzadmin.ddl_log
+  (username,
+   osuser,
+   hostname,
+   terminal,
+   ip_address,
+   ddl_date,
+   ddl_type,
+   object_type,
+   object_owner,
+   object_name,
+   sql_text,
+   inst_id,
+   sid)
+  VALUES
+  (ora_login_user,
+   sys_context('USERENV','OS_USER'),
+   sys_context('USERENV','HOST'),
+   sys_context('USERENV','TERMINAL'),
+   sys_context('USERENV','IP_ADDRESS'),
+   CURRENT_TIMESTAMP,
+   ora_sysevent,
+   ora_dict_obj_type,
+   ora_dict_obj_owner,
+   ora_dict_obj_name,
+   v_stmt,
+   sys_context('USERENV','INSTANCE'),
+   sys_context('USERENV','SID'));
+   commit;
+--end if; 
+exception 
+ when value_error then null;   
+END ddl_trigger;
+/
