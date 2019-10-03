@@ -1,0 +1,14 @@
+--https://blogs.oracle.com/dbstorage/database-compression-related-mos-notes-some-very-useful-reading
+
+Advanced Compression Master Note (Doc ID 1223705.1)
+How to compress a table that is online (Doc ID 1353967.1)
+Advanced Compression critical patches (Doc ID 1061366.1)
+Redo Transport compression with Data Guard (Doc ID 729551.1)
+How to see if rows are compressed in a table (Doc ID 1477918.1)
+A complete understanding of RMAN compression (Doc ID 563427.1)
+How to determine if Advanced Compression is used by DataPump (Doc ID 1993134.1)
+Index Organized Tables (IOTs) and compression (Doc ID 1555637.1)
+How to find the optimal Index Key COMPRESS level for Indexes (Doc ID 601690.1)
+Advanced Compression Restriction on 255 Columns Lifted For Oracle 12c (Doc ID 1612095.1)                                                                                               
+How Does Compression Advisor Work? (Doc ID 1284972.1)
+Exadata Hybrid Columnar Compression (EHCC) FAQ (Doc ID 1910687.1)
