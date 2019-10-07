@@ -1,0 +1,6 @@
+--https://www.usn-it.de/2019/09/30/oratop-in-oracle-19c/
+
+#!/bin/bash
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+# /home/oracle/bin/oratop12c-64.bin -dmfi1 / as sysdba $@
+/u01/app/oracle/product/19/db_1/suptools/oratop/oratop -rmfi1 / as sysdba $@
