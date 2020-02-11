@@ -4,3 +4,22 @@
 alter table TEST set INTERVAL(NUMTOYMINTERVAL(1, 'MONTH'));
 --round robin tbs
 alter table TEST set store in (TBSPART_01,TBSPART_02,TBSPART_03,TBSPART_04,TBSPART_05,TBSPART_06,TBSPART_07,TBSPART_08,TBSPART_09,TBSPART_10,TBSPART_11,TBSPART_12);
+
+--https://docs.oracle.com/database/121/VLDBG/GUID-9A05E5AB-3A08-4502-A25B-4246E26CA2C0.htm
+
+LOCK TABLE interval_sales
+  PARTITION FOR (TO_DATE('01-JUN-2007','dd-MON-yyyy'))
+  IN SHARE MODE;
+
+ALTER TABLE interval_sales
+  EXCHANGE PARTITION FOR (TO_DATE('01-JUN-2007','dd-MON-yyyy'))
+  WITH TABLE interval_sales_jun_2007
+  INCLUDING INDEXES;
+ 
+ --Dropping Interval Partitions
+ ALTER TABLE sales DROP PARTITION FOR(TO_DATE('01-SEP-2007','dd-MON-yyyy'));
+ 
+ --Splitting a Partition of an Interval-Partitioned Table
+ ALTER TABLE transactions
+    SPLIT PARTITION FOR(TO_DATE('01-MAY-2007','dd-MON-yyyy'))
+    AT (TO_DATE('15-MAY-2007','dd-MON-yyyy'));
