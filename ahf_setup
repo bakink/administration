@@ -1,0 +1,4 @@
+
+./ahf_setup -ahf_loc /u01/dekadba/ahf -notfasetup
+
+./orachk -a
