@@ -1,0 +1,64 @@
+
+--https://askdba.org/weblog/2012/09/limiting-io-and-cpu-resources-using-11g-oracle-resource-manager/
+
+begin
+sys.dbms_resource_manager.clear_pending_area();
+sys.dbms_resource_manager.create_pending_area();
+sys.dbms_resource_manager.create_consumer_group(CONSUMER_GROUP=>'CPU_IO_LIMIT_GRP',
+COMMENT=>'Consumer group for RO_USER to limit parallelism,I/O and CPU Time');
+sys.dbms_resource_manager.set_consumer_group_mapping(attribute => DBMS_RESOURCE_MANAGER.ORACLE_USER,
+value => 'RO_USER',consumer_group =>'CPU_IO_LIMIT_GRP');
+
+-- Create resource plan:
+sys.dbms_resource_manager.create_plan(PLAN=> 'CPU_IO_LIMIT',COMMENT=>'Cancel Sql plan for RO_USER');
+
+--Need to create plan_directive
+--Limiting parallelism to max 4, I/O Limit to 10000Mb and CPU_time to 3600 sec
+sys.dbms_resource_manager.create_plan_directive(
+PLAN=> 'CPU_IO_LIMIT',
+GROUP_OR_SUBPLAN=>'CPU_IO_LIMIT_GRP',
+COMMENT=>'Kill statement after exceeding 3600 sec , limit parallelism to max 4 and limit i/o to 20000M ',
+PARALLEL_DEGREE_LIMIT_P1 => 4,
+SWITCH_GROUP=>'CANCEL_SQL',
+SWITCH_TIME=>3600,
+SWITCH_IO_MEGABYTES=>20000,
+SWITCH_ESTIMATE=>false
+);
+
+--Its compulsory to specify directive for OTHER_GROUPS else this will fail
+dbms_resource_manager.create_plan_directive(PLAN=> 'CPU_IO_LIMIT',GROUP_OR_SUBPLAN=>'OTHER_GROUPS',CPU_P1=>100);
+sys.dbms_resource_manager.validate_pending_area;
+sys.dbms_resource_manager.submit_pending_area;
+end;
+/
+
+--Grant RO_USER to switch group
+exec dbms_resource_manager_privs.grant_switch_consumer_group('RO_USER','CPU_IO_LIMIT_GRP',false);
+--Set initial group for RO_USER to CPU_IO_LIMIT_GRP
+exec dbms_resource_manager.set_initial_consumer_group('RO_USER','CPU_IO_LIMIT_GRP');
+
+ALTER SYSTEM SET RESOURCE_MANAGER_PLAN ='CPU_IO_LIMIT';
+
+---****************** resource usage using v$rsrc_session_info
+
+SELECT s.sid sess_id, g.name consumer_group,
+s.state, s.consumed_cpu_time cpu_time, s.cpu_wait_time, s.queued_time,(s.CURRENT_SMALL_READ_MEGABYTES+s.CURRENT_LARGE_READ_MEGABYTES) read_MB,(s.CURRENT_SMALL_WRITE_MEGABYTES+s.CURRENT_LARGE_WRITE_MEGABYTES) write_mb
+FROM v$rsrc_session_info s, v$rsrc_consumer_group g
+WHERE s.current_consumer_group_id = g.id and g.name='CPU_IO_LIMIT_GRP';
+
+
+To remove the plan, we have to unset resource_manager_plan parameter and then delete it using following code
+
+ALTER SYSTEM SET RESOURCE_MANAGER_PLAN ='';
+begin
+sys.dbms_resource_manager.clear_pending_area();
+sys.dbms_resource_manager.create_pending_area();
+sys.dbms_resource_manager.delete_plan_cascade ('CPU_IO_LIMIT');
+sys.dbms_resource_manager.submit_pending_area();
+end;
+/
+
+SELECT s.sid sess_id, g.name consumer_group,
+s.state, s.consumed_cpu_time cpu_time, s.cpu_wait_time, s.queued_time,s.CURRENT_SMALL_READ_MEGABYTES S_RIO,s.CURRENT_LARGE_READ_MEGABYTES M_RIO,s.CURRENT_SMALL_WRITE_MEGABYTES S_WIO,s.CURRENT_LARGE_WRITE_MEGABYTES M_WIO,(s.CURRENT_SMALL_READ_MEGABYTES+s.CURRENT_LARGE_READ_MEGABYTES) read_MB,(s.CURRENT_SMALL_WRITE_MEGABYTES+s.CURRENT_LARGE_WRITE_MEGABYTES) write_mb
+FROM v$rsrc_session_info s, v$rsrc_consumer_group g
+WHERE s.current_consumer_group_id = g.id and g.name='CPU_IO_LIMIT_GRP';
