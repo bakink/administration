@@ -1,0 +1,9 @@
+
+1.	Datafile içerisindeki max. Block segment bulma
+https://jonathanlewis.wordpress.com/tablespace-hwm/ 
+https://asktom.oracle.com/pls/apex/f?p=100:11:0::::P11_QUESTION_ID:18283723778263
+
+2.	Tablo – segment move – rebuild vs. 
+
+3.	Datafile resize - küçültme
+https://blog.dbi-services.com/resize-your-oracle-datafiles-down-to-the-minimum-without-ora-03297/ 
