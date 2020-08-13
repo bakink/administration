@@ -94,3 +94,35 @@ begin
   end if;
 end log_errors_trig;
 /
+--ykb
+                              
+drop TRIGGER master.LOG_ERRORS_ALL;
+drop TABLE master.DB_ERROR_LOG purge;
+CREATE TABLE master.DB_ERROR_LOG( ERROR_DATE DATE,SID NUMBER, USERNAME VARCHAR2(30 BYTE), OSUSER VARCHAR2(30 BYTE), HOST_IP VARCHAR2(128 BYTE), 
+MODULE VARCHAR2(128 BYTE), INSTANCE_NAME VARCHAR2(30 BYTE), ERROR_TEXT VARCHAR2(3000 BYTE), STATEMENT VARCHAR2(4000 BYTE), ERRORNO NUMBER,TERMINAL VARCHAR2(30 BYTE)) 
+NOCOMPRESS TABLESPACE USERS PCTUSED 0 PCTFREE 10 INITRANS 16 MAXTRANS 255 
+STORAGE ( BUFFER_POOL DEFAULT ) PARTITION BY HASH (ERROR_DATE) PARTITIONS 128 STORE IN (USERS) NOCACHE NOPARALLEL MONITORING ;
+
+CREATE OR REPLACE TRIGGER master.LOG_ERRORS_ALL AFTER servererror ON DATABASE WHEN (nvl(USER,'NULL') NOT IN ('1DBSNMP','1SYS') )
+DECLARE
+sql_text ora_name_list_t;
+stmt VARCHAR2(4000) := NULL;
+BEGIN
+BEGIN
+if ora_server_error(1)<>1017 then
+FOR i IN 1 .. ora_sql_txt(sql_text) LOOP
+stmt := stmt || sql_text(i);
+END LOOP;
+end if;
+EXCEPTION WHEN OTHERS THEN stmt:='';
+END;
+IF nvl(ora_server_error(1),999999999) not in(1,1035,2001,1400,1775) THEN
+INSERT INTO master.db_error_log VALUES(SYSDATE,sys_context('USERENV','SID'), USER, sys_context('USERENV','OS_USER'), sys_context('USERENV','HOST')||':'||sys_context('USERENV','IP_ADDRESS'),
+sys_context('USERENV','MODULE'),sys_context('USERENV','INSTANCE_NAME')||' -- '||sys_context('USERENV','DB_NAME'),
+dbms_utility.format_error_stack, stmt, ora_server_error(1),sys_context('USERENV','TERMINAL'));
+END IF;
+END;
+/
+
+
+                              
