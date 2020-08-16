@@ -20,4 +20,14 @@ declare
      sys.dbms_sys_sql.parse_as_user(myint,sqltext,dbms_sql.native,UID);
      l_result:=sys.dbms_sys_sql.execute(myint);
      sys.dbms_sys_sql.close_cursor(myint);
+     commit;
  end ;
+
+---kill jobs
+
+select  'alter system disconnect session ''' || b.sid || ',' || b.serial# || ''' immediate;  --' || b.program  
+from dba_jobs_running a, v$session b
+where a.sid=b.sid
+
+select 'kill -9 '||spid from v$process where addr in
+(select paddr from v$session where sid in(select /*+ rule */ sid from dba_jobs_running))
