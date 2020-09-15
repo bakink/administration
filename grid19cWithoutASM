@@ -11,6 +11,7 @@ srvctl add listener LISTENER -endpoints "TCP:1931/TCP:1932/TCP:1933"
 
 --ASM
 srvctl add asm
+srvctl modify asm  -diskstring '/dev/rdsk/*'
 srvctl start asm
 
 
