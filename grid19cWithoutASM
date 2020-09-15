@@ -1,0 +1,39 @@
+Software Only sonrası ASM/LISTENER config
+  
+--https://christian-gohmann.de/2017/04/28/silent-installation-of-grid-infrastructure-12-2-0-1-without-asm/
+--https://mandysandhu.com/2017/10/23/oracle-12c-r2-12-2-0-1-gi-installation-for-single-instance-without-with-asm/
+
+/u01/oracle/19.0.0/grid/perl/bin/perl -I/u01/oracle/19.0.0/grid/perl/lib -I/u01/oracle/19.0.0/grid/crs/install /u01/oracle/19.0.0/grid/crs/install/roothas.pl
+
+
+--listener
+srvctl add listener LISTENER -endpoints "TCP:1931/TCP:1932/TCP:1933"
+
+--ASM
+srvctl add asm
+srvctl start asm
+
+
+Version 19.7.0.0.0
+-bash-5.0$ crsctl stat res -t
+--------------------------------------------------------------------------------
+Name           Target  State        Server                   State details       
+--------------------------------------------------------------------------------
+Local Resources
+--------------------------------------------------------------------------------
+ora.LISTENER.lsnr
+               ONLINE  ONLINE       seymen                   STABLE
+ora.asm
+               ONLINE  ONLINE       seymen                   Started,STABLE
+ora.ons
+               OFFLINE OFFLINE      seymen                   STABLE
+--------------------------------------------------------------------------------
+Cluster Resources
+--------------------------------------------------------------------------------
+ora.cssd
+      1        ONLINE  ONLINE       seymen                   STABLE
+ora.diskmon
+      1        OFFLINE OFFLINE                               STABLE
+ora.evmd
+      1        ONLINE  ONLINE       seymen                   STABLE
+--------------------------------------------------------------------------------

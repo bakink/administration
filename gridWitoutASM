@@ -1,4 +1,0 @@
---https://mandysandhu.com/2017/10/23/oracle-12c-r2-12-2-0-1-gi-installation-for-single-instance-without-with-asm/
---https://mandysandhu.com/2017/10/23/oracle-12c-r2-12-2-0-1-gi-installation-for-single-instance-without-with-asm/
-
-/u01/oracle/19.0.0/grid/perl/bin/perl -I/u01/oracle/19.0.0/grid/perl/lib -I/u01/oracle/19.0.0/grid/crs/install /u01/oracle/19.0.0/grid/crs/install/roothas.pl
