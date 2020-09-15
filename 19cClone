@@ -1,0 +1,31 @@
+
+***********************19c - clone
+
+
+
+mkdir /u01/oracle/setup/19CGoldimage
+--https://rene-ace.com/how-to-clone-an-oracle-home-in-19c/
+--https://dbalifeeasy.com/2020/06/08/how-to-clone-19c-oracle-rac-home-using-gold-image/
+
+$ORACLE_HOME/runInstaller -silent  -createGoldImage -destinationLocation /u01/oracle/setup/19CGoldimage
+
+mkdir /u01/app/oracle/product/19.0.0.0/db_home5
+
+cd /u01/app/oracle/product/19.0.0.0/db_home5
+
+unzip /u01/oracle/setup/19CGoldimage/db_home_2020-09-15_04-07-29PM.zip -d ./
+
+./runInstaller -silent -ignorePrereq  -waitforcompletion  \
+oracle.install.option=INSTALL_DB_SWONLY                   \
+UNIX_GROUP_NAME=dba                                       \
+INVENTORY_LOCATION=/u01/app/oraInventory                  \
+ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/db_home5     \
+ORACLE_BASE=/u01/app/oracle                               \
+oracle.install.db.InstallEdition=EE                       \
+oracle.install.db.OSDBA_GROUP=dba                         \
+oracle.install.db.OSOPER_GROUP=dba                        \
+oracle.install.db.OSBACKUPDBA_GROUP=dba                   \
+oracle.install.db.OSDGDBA_GROUP=dba                       \
+oracle.install.db.OSKMDBA_GROUP=dba                       \
+oracle.install.db.OSRACDBA_GROUP=dba                      \
+oracle.install.db.CLUSTER_NODES=delta1,delta2
