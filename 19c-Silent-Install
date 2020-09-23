@@ -1,0 +1,379 @@
+
+############################# INSTALL 19c DB SOFTWARE ON EXADATA #############################
+
+19c Grid Infrastructure and Database Upgrade steps for Exadata Database Machine running on Oracle Linux (Doc ID 2542082.1)
+	
+[oracle@owctdbadm01 ~]$ cat dbs_group
+owctdbadm01
+owctdbadm02
+
+[oracle@owctdbadm01 ~]$ . .HMNDEV1.env
+[oracle@owctdbadm01 ~]$ echo $ORACLE_HOME
+/u01/app/oracle/product/11.2.0.4/dbhome_6
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$ dcli -l oracle -g dbs_group mkdir -p /u01/app/oracle/product/19.0.0.0/dbhome_6
+[oracle@owctdbadm01 ~]$
+
+[oracle@owctdbadm01 patch]$ unzip -q /export/OWCT/backup1/patch/LINUX.X64_193000_db_home.zip -d /u01/app/oracle/product/19.0.0.0/dbhome_6
+[oracle@owctdbadm01 patch]$
+
+[oracle@owctdbadm01 ~]$ unset ORACLE_HOME ORACLE_BASE ORACLE_SID
+[oracle@owctdbadm01 ~]$ export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_6
+[oracle@owctdbadm01 ~]$ export ORACLE_BASE=/u01/app/oracle
+[oracle@owctdbadm01 ~]$ cd /u01/app/oracle
+[oracle@owctdbadm01 oracle]$ export ORA_INVENTORY=/u01/app/oraInventory
+[oracle@owctdbadm01 oracle]$
+[oracle@owctdbadm01 oracle]$
+[oracle@owctdbadm01 oracle]$ cd /u01/app/oraInventory
+[oracle@owctdbadm01 oraInventory]$ cd
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$ id
+uid=1001(oracle) gid=1001(oinstall) groups=1001(oinstall),1002(dba)
+[oracle@owctdbadm01 ~]$
+
+
+
+[oracle@owctdbadm01 ~]$ echo $ORACLE_HOME
+/u01/app/oracle/product/19.0.0.0/dbhome_6
+[oracle@owctdbadm01 ~]$ echo $ORA_INVENTORY
+/u01/app/oraInventory
+[oracle@owctdbadm01 ~]$ echo $ORACLE_BASE
+/u01/app/oracle
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$ $ORACLE_HOME/runInstaller -ignorePrereq -silent                             \
+> oracle.install.option=INSTALL_DB_SWONLY                                     \
+> UNIX_GROUP_NAME=oinstall                                                    \
+> INVENTORY_LOCATION=${ORA_INVENTORY}                                         \
+> ORACLE_BASE=${ORACLE_BASE}                                                  \
+> oracle.install.db.InstallEdition=EE                                         \
+> oracle.install.db.OSDBA_GROUP=dba                                           \
+> oracle.install.db.OSOPER_GROUP=dba                                          \
+> oracle.install.db.OSBACKUPDBA_GROUP=dba                                     \
+> oracle.install.db.OSDGDBA_GROUP=dba                                         \
+> oracle.install.db.OSKMDBA_GROUP=dba                                         \
+> oracle.install.db.OSRACDBA_GROUP=dba                                        \
+> oracle.install.db.rootconfig.executeRootScript=false                        \
+> oracle.install.db.CLUSTER_NODES=owctdbadm01,owctdbadm02                     \
+> oracle.install.db.config.starterdb.type=GENERAL_PURPOSE                     \
+> oracle.install.db.ConfigureAsContainerDB=false                              \
+> oracle.install.db.config.starterdb.memoryOption=false                       \
+> oracle.install.db.config.starterdb.installExampleSchemas=false              \
+> oracle.install.db.config.starterdb.managementOption=DEFAULT                 \
+> oracle.install.db.config.starterdb.enableRecovery=false
+Launching Oracle Database Setup Wizard...
+
+The response file for this session can be found at:
+ /u01/app/oracle/product/19.0.0.0/dbhome_6/install/response/db_2020-09-23_02-21-07PM.rsp
+
+You can find the log of this install session at:
+ /u01/app/oraInventory/logs/InstallActions2020-09-23_02-21-07PM/installActions2020-09-23_02-21-07PM.log
+
+As a root user, execute the following script(s):
+        1. /u01/app/oracle/product/19.0.0.0/dbhome_6/root.sh
+
+Execute /u01/app/oracle/product/19.0.0.0/dbhome_6/root.sh on the following nodes:
+[owctdbadm01, owctdbadm02]
+
+
+Successfully Setup Software.
+[oracle@owctdbadm01 ~]$
+
+
+[root@owctdbadm01 ~]# /u01/app/oraInventory/orainstRoot.sh
+Changing permissions of /u01/app/oraInventory.
+Adding read,write permissions for group.
+Removing read,write,execute permissions for world.
+
+Changing groupname of /u01/app/oraInventory to oinstall.
+The execution of the script is complete.
+[root@owctdbadm01 ~]# /u01/app/oracle/product/19.0.0.0/dbhome_6/root.sh
+Check /u01/app/oracle/product/19.0.0.0/dbhome_6/install/root_owctdbadm01.sys.yapikredi.com.tr_2020-09-23_14-30-29-083502453.log for the output of root script
+
+
+[root@owctdbadm01 ~]# cat -100f /u01/app/oracle/product/19.0.0.0/dbhome_6/install/root_owctdbadm01.sys.yapikredi.com.tr_2020-09-23_14-30-29-083502453.log
+Performing root user operation.
+
+The following environment variables are set as:
+    ORACLE_OWNER= oracle
+    ORACLE_HOME=  /u01/app/oracle/product/19.0.0.0/dbhome_6
+   Copying dbhome to /usr/local/bin ...
+   Copying oraenv to /usr/local/bin ...
+   Copying coraenv to /usr/local/bin ...
+
+Entries will be added to the /etc/oratab file as needed by
+Database Configuration Assistant when a database is created
+Finished running generic part of root script.
+Now product-specific root actions will be performed.
+
+
+[root@owctdbadm02 ~]# /u01/app/oraInventory/orainstRoot.sh
+Changing permissions of /u01/app/oraInventory.
+Adding read,write permissions for group.
+Removing read,write,execute permissions for world.
+
+Changing groupname of /u01/app/oraInventory to oinstall.
+The execution of the script is complete.
+[root@owctdbadm02 ~]# /u01/app/oracle/product/19.0.0.0/dbhome_6/root.sh
+Check /u01/app/oracle/product/19.0.0.0/dbhome_6/install/root_owctdbadm02.sys.yapikredi.com.tr_2020-09-23_14-32-18-332878840.log for the output of root script
+[root@owctdbadm02 ~]# cat /u01/app/oracle/product/19.0.0.0/dbhome_6/install/root_owctdbadm02.sys.yapikredi.com.tr_2020-09-23_14-32-18-332878840.log
+Performing root user operation.
+
+The following environment variables are set as:
+    ORACLE_OWNER= oracle
+    ORACLE_HOME=  /u01/app/oracle/product/19.0.0.0/dbhome_6
+   Copying dbhome to /usr/local/bin ...
+   Copying oraenv to /usr/local/bin ...
+   Copying coraenv to /usr/local/bin ...
+
+Entries will be added to the /etc/oratab file as needed by
+Database Configuration Assistant when a database is created
+Finished running generic part of root script.
+Now product-specific root actions will be performed.
+[root@owctdbadm02 ~]#
+
+
+
+########################### DOWNLOAD AND INSTALL OPATCH ###########################
+How To Download And Install The Latest OPatch(6880880) Version (Doc ID 274526.1)
+
+[oracle@owctdbadm01 ~]$  cd /u01/app/oracle/product/19.0.0.0/dbhome_6/
+[oracle@owctdbadm01 dbhome_6]$
+[oracle@owctdbadm01 dbhome_6]$ mv OPatch/ OPatch_old
+[oracle@owctdbadm02 dbhome_6]$ mv OPatch/ OPatch_old
+
+[oracle@owctdbadm01 ~]$ dcli -l oracle -g dbs_group unzip -oq -d /u01/app/oracle/product/19.0.0.0/dbhome_6 /export/OWCT/backup1/patch/p6880880_190000_Linux-x86-64.zip
+
+
+[oracle@owctdbadm01 ~]$ /u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch/opatch version
+OPatch Version: 12.2.0.1.21
+
+OPatch succeeded.
+
+
+########################### INSTALL PATCH ###########################
+[oracle@owctdbadm01 patch]$ unzip p30125133_190000_Linux-x86-64.zip
+
+
+############### ON FIRST NODE
+[root@owctdbadm01 patch]# export PATH=$PATH:/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch
+[root@owctdbadm01 patch]# opatch version
+OPatch Version: 12.2.0.1.21
+
+OPatch succeeded.
+[root@owctdbadm01 patch]# which opatchauto
+/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch/opatchauto
+[root@owctdbadm01 patch]#
+
+
+[root@owctdbadm01 patch]# opatchauto apply /export/OWCT/backup1/patch/30125133 -oh /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+OPatchauto session is initiated at Wed Sep 23 15:18:08 2020
+
+System initialization log file is /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchautodb/systemconfig2020-09-23_03-18-15PM.log.
+
+Session log file is /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchauto/opatchauto2020-09-23_03-18-55PM.log
+The id for this session is D8WK
+
+Executing OPatch prereq operations to verify patch applicability on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Patch applicability verified successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Verifying SQL patch applicability on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+
+Preparing to bring down database service on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+
+Performing prepatch operation on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Perpatch operation completed successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Start applying binary patch on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Binary patch applied successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Performing postpatch operation on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Postpatch operation completed successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Preparing home /u01/app/oracle/product/19.0.0.0/dbhome_6 after database service restarted
+No step execution required.........
+
+
+Trying to apply SQL patch on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+OPatchAuto successful.
+
+--------------------------------Summary--------------------------------
+
+Patching is completed successfully. Please find the summary as follows:
+
+Host:owctdbadm01
+RAC Home:/u01/app/oracle/product/19.0.0.0/dbhome_6
+Version:19.0.0.0.0
+Summary:
+
+==Following patches were SUCCESSFULLY applied:
+
+Patch: /export/OWCT/backup1/patch/30125133
+Log: /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchauto/core/opatch/opatch2020-09-23_15-19-10PM_1.log
+
+
+
+OPatchauto session completed at Wed Sep 23 15:21:18 2020
+Time taken to complete the session 3 minutes, 10 seconds
+[root@owctdbadm01 patch]#
+
+
+[oracle@owctdbadm01 ~]$ export ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_6
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$
+[oracle@owctdbadm01 ~]$ export PATH=$PATH:/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch
+[oracle@owctdbadm01 ~]$ opatch lsinventory
+Oracle Interim Patch Installer version 12.2.0.1.21
+Copyright (c) 2020, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /u01/app/oracle/product/19.0.0.0/dbhome_6
+Central Inventory : /u01/app/oraInventory
+   from           : /u01/app/oracle/product/19.0.0.0/dbhome_6/oraInst.loc
+OPatch version    : 12.2.0.1.21
+OUI version       : 12.2.0.7.0
+Log file location : /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatch/opatch2020-09-23_15-23-33PM_1.log
+
+Lsinventory Output file location : /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatch/lsinv/lsinventory2020-09-23_15-23-33PM.txt
+--------------------------------------------------------------------------------
+Local Machine Information::
+Hostname: owctdbadm01.sys.yapikredi.com.tr
+ARU platform id: 226
+ARU platform description:: Linux x86-64
+
+Installed Top-level Products (1):
+
+Oracle Database 19c                                                  19.0.0.0.0
+There are 1 products installed in this Oracle Home.
+
+
+Interim patches (2) :
+
+Patch  30125133     : applied on Wed Sep 23 15:20:04 EET 2020
+Unique Patch ID:  23151502
+Patch description:  "Database Release Update : 19.5.0.0.191015 (30125133)"
+   Created on 9 Oct 2019, 00:10:29 hrs PST8PDT
+
+
+
+############### ON SECOND NODE
+[root@owctdbadm02 ~]# export PATH=$PATH:/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch
+[root@owctdbadm02 ~]# opatch version
+OPatch Version: 12.2.0.1.21
+
+OPatch succeeded.
+[root@owctdbadm02 ~]# which opatchauto
+/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch/opatchauto
+[root@owctdbadm02 ~]#
+
+[root@owctdbadm02 ~]# opatchauto apply /export/OWCT/backup1/patch/30125133 -oh /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+OPatchauto session is initiated at Wed Sep 23 15:29:39 2020
+
+System initialization log file is /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchautodb/systemconfig2020-09-23_03-29-46PM.log.
+
+Session log file is /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchauto/opatchauto2020-09-23_03-30-14PM.log
+The id for this session is NWHN
+
+Executing OPatch prereq operations to verify patch applicability on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Patch applicability verified successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Verifying SQL patch applicability on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+
+Preparing to bring down database service on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+
+Performing prepatch operation on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Perpatch operation completed successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Start applying binary patch on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Binary patch applied successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Performing postpatch operation on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+Postpatch operation completed successfully on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+
+
+Preparing home /u01/app/oracle/product/19.0.0.0/dbhome_6 after database service restarted
+No step execution required.........
+
+
+Trying to apply SQL patch on home /u01/app/oracle/product/19.0.0.0/dbhome_6
+No step execution required.........
+
+OPatchAuto successful.
+
+--------------------------------Summary--------------------------------
+
+Patching is completed successfully. Please find the summary as follows:
+
+Host:owctdbadm02
+RAC Home:/u01/app/oracle/product/19.0.0.0/dbhome_6
+Version:19.0.0.0.0
+Summary:
+
+==Following patches were SUCCESSFULLY applied:
+
+Patch: /export/OWCT/backup1/patch/30125133
+Log: /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatchauto/core/opatch/opatch2020-09-23_15-30-30PM_1.log
+
+
+
+OPatchauto session completed at Wed Sep 23 15:32:44 2020
+Time taken to complete the session 3 minutes, 5 seconds
+[root@owctdbadm02 ~]#
+[oracle@owctdbadm02 ~]$ export PATH=$PATH:/u01/app/oracle/product/19.0.0.0/dbhome_6/OPatch
+[oracle@owctdbadm02 ~]$ opatch lsinventory
+Oracle Interim Patch Installer version 12.2.0.1.21
+Copyright (c) 2020, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /u01/app/oracle/product/19.0.0.0/dbhome_6
+Central Inventory : /u01/app/oraInventory
+   from           : /u01/app/oracle/product/19.0.0.0/dbhome_6/oraInst.loc
+OPatch version    : 12.2.0.1.21
+OUI version       : 12.2.0.7.0
+Log file location : /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatch/opatch2020-09-23_15-34-26PM_1.log
+
+Lsinventory Output file location : /u01/app/oracle/product/19.0.0.0/dbhome_6/cfgtoollogs/opatch/lsinv/lsinventory2020-09-23_15-34-26PM.txt
+--------------------------------------------------------------------------------
+Local Machine Information::
+Hostname: owctdbadm02.sys.yapikredi.com.tr
+ARU platform id: 226
+ARU platform description:: Linux x86-64
+
+Installed Top-level Products (1):
+
+Oracle Database 19c                                                  19.0.0.0.0
+There are 1 products installed in this Oracle Home.
+
+
+Interim patches (2) :
+
+Patch  30125133     : applied on Wed Sep 23 15:31:26 EET 2020
+Unique Patch ID:  23151502
+Patch description:  "Database Release Update : 19.5.0.0.191015 (30125133)"
+   Created on 9 Oct 2019, 00:10:29 hrs PST8PDT
+
+
+
+
+
