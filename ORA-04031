@@ -5,6 +5,11 @@
 --https://mahmoudhatem.wordpress.com/2015/04/22/oracle-12c-shared-pool-and-durations-enhancement/
 --https://blog.tanelpoder.com/2009/01/02/oracle-memory-troubleshooting-part-1-heapdump-analyzer/
 --http://www.juliandyke.com/Diagnostics/Dumps/Dumps.php
+--https://www.anbob.com/archives/6021.html
+
+cd $ADR/incidents
+find. -type f -print -exec grep "TOP "{} \;
+
 
 select * from (
     select name, bytes from v$sgastat where pool ='shared pool' order by 2 desc
