@@ -1,0 +1,22 @@
+SELECT *
+  FROM DBA_BASE_TABLE_MVIEWS B, DBA_REGISTERED_MVIEWS R
+ WHERE     B.MVIEW_ID = R.MVIEW_ID
+       AND R.NAME NOT IN ('SNAP_TRD_SAS_MONTH',
+                          'CCA_SNAP_TRD_SAS_MONTH',
+                          'TFS_SNAP_VECTAXAMT',
+                          'TFS_SNAP_BROKER',
+                          'GLB_SNAP_STDLOV',
+                          'CRD_SNAP_CATEGORYCODE')
+       AND B.MVIEW_LAST_REFRESH_TIME < SYSDATE - 31; 
+
+BEGIN
+    DBMS_SNAPSHOT.REFRESH (LIST                   => 'CBSLIVE.CLNKA_OCEAN',
+                           METHOD                 => 'C',                           --complete refresh
+                           PUSH_DEFERRED_RPC      => TRUE,
+                           REFRESH_AFTER_ERRORS   => FALSE,
+                           PURGE_OPTION           => 1,
+                           PARALLELISM            => 0,
+                           ATOMIC_REFRESH         => FALSE,                         --false:truncate+append true:delete+insert
+                           NESTED                 => FALSE);
+END;
+/
