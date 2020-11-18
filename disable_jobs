@@ -23,6 +23,22 @@ declare
      commit;
  end ;
 
+*****
+ declare
+   uid number;
+   l_result integer;
+   sqltext varchar2(1000) := 'begin dbms_job.change(1519, ''dbms_refresh.refresh(''''"OC_MVT"."CUST_PHONE_ATTRIBUTES"'''');'',SYSDATE+365,''SYSDATE+365'' ); end;  ';
+   myint integer;
+   begin
+       select user_id into UID from all_users where username like 'OC_MVT';
+       myint:=sys.dbms_sys_sql.open_cursor();
+       sys.dbms_sys_sql.parse_as_user(myint,sqltext,dbms_sql.native,UID);
+       l_result:=sys.dbms_sys_sql.execute(myint);
+       sys.dbms_sys_sql.close_cursor(myint);
+       commit;
+   end ;
+  /
+*****
 ---kill jobs
 
 select  'alter system disconnect session ''' || b.sid || ',' || b.serial# || ''' immediate;  --' || b.program  
