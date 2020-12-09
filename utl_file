@@ -1,0 +1,62 @@
+
+declare
+p_query varchar2(32767):=q'{select *
+  from (select *
+          from pdm.pdm_coll_outputs
+        union all
+        select *
+          from archive.pdm_coll_outputs@ARCHIVE.WORLD) a
+where a.CLIENT_NO in
+       (select CLIENT_NO from pdm.PDM_COLL_EXCL_UNEMPLOYED_TEMP)
+   and a.status = 1
+   and trunc(a.create_date) >= to_date('7.04.2020', 'dd.mm.yyyy')}';
+p_separator varchar2(1) default ';';
+p_dir varchar2(10):= 'TMP_DIR' ;
+p_filename varchar2(20) :='P2.txt';
+l_output utl_file.file_type;
+l_theCursor integer default dbms_sql.open_cursor;
+l_columnValue varchar2(2000);
+l_status integer;
+l_colCnt number default 0;
+l_separator varchar2(10) default '';
+l_cnt number default 0;
+begin
+l_output := utl_file.fopen( p_dir, p_filename, 'w' );
+
+dbms_sql.parse( l_theCursor, p_query, dbms_sql.native );
+
+for i in 1 .. 255 loop
+begin
+dbms_sql.define_column( l_theCursor, i,l_columnValue, 2000 );
+l_colCnt := i;
+exception
+when others then
+if ( sqlcode = -1007 ) then exit;
+else
+raise;
+end if;
+end;
+end loop;
+
+dbms_sql.define_column( l_theCursor, 1, l_columnValue,2000 );
+
+l_status := dbms_sql.execute(l_theCursor);
+
+loop
+exit when ( dbms_sql.fetch_rows(l_theCursor) <= 0 );
+l_separator := '';
+for i in 1 .. l_colCnt loop
+dbms_sql.column_value( l_theCursor, i, 
+l_columnValue );
+utl_file.put( l_output, l_separator || 
+l_columnValue );
+l_separator := p_separator;
+end loop;
+utl_file.new_line( l_output );
+l_cnt := l_cnt+1;
+end loop;
+dbms_sql.close_cursor(l_theCursor);
+
+utl_file.fclose( l_output );
+end;
+/
