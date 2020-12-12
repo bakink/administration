@@ -1,0 +1,147 @@
+--http://yong321.freeshell.org/oranotes/DBLink.txt
+
+Uncommon Sense About Database Links
+
+----------------------------------------------------------------------------------------------------
+
+OBJECT_NAME of DBA_OBJECTS is documented to be a VARCHAR2 column of length 30 characters in pre-12c 
+documentation, but this column has been of length 128 for a long time. As far as I know, only a 
+database link is allowed to have a name of longer than 30 characters, specifically 128. 12c 
+documentation finally corrected this mistake.
+
+Of all object types, only database links are not assigned OBJECT_ID's.
+
+----------------------------------------------------------------------------------------------------
+
+Global database link:
+If two databases have the same user and he uses the same password, and a central Oracle LDAP (OID)
+or ONames server or TNS manager is used on the server to resolve connect identifiers, you can use 
+tablename@remotedb syntax without actually creating a DB link called remotedb, e.g.
+
+SQL> select * from dual@remotedb;
+
+D
+-
+X
+
+SQL> select * from dba_db_links where db_link like 'ORACD9%';
+
+no rows selected
+
+You can use this method to tell whether the server (not your client) uses LDAP/ONames or Tnsnames to 
+resolve the connect identifier. (see the first bullet of ./LdapInsteadOfTnsnames)
+
+In 12c or above, you have to allow global DB links:
+alter system set allow_global_dblinks=true;
+in CDB if you use multitenant architecture.
+
+----------------------------------------------------------------------------------------------------
+
+Beginning with 10gR2, "create database link identified by values '<password hash>'" where 
+<password hash> is sys.user$.password (in 10g and below, also dba_users.password) no longer works. 
+Actually, the SQL creates the DB link fine but any SQL using this link will throw ORA-600 [kzdlk_zt2]. 
+The reason is explained in articles such as 456320.1. The documented way to solve the problem is 
+to create the DB link using clear text password, or with export/import. If you choose the latter, 
+you can use data pump "include=db_link" option (no other include needed) to just export/import the 
+DB link. Of course "impdp network_link=srcDB include=db_link" on the target works too, without 
+explicit expdp on the source.
+
+One problem with this solution is that if the source database has a different db_domain, the DB 
+link thus created in the target database will have the domain name explicitly appended to be usable, 
+a requirement not existing in the source. This necessitates code change if you point your application 
+code to the new database.
+
+In 11.2.0.3 and below, you can still get the "identified by values" clause to work without this export/import
+hassell and create a link that won't throw ORA-600 when you use it. Logon as sys:
+
+set long 300
+select passwordx from link$ where name = 'LINKNAME';
+
+Then the SQL you need to run in any other database in which you need the new DB link is simply:
+
+create database link linkname connect to xxxxxx identified by values '<the long password hash from above>' using 'remotedb';
+
+But in 11.2.0.4, that would throw error ORA-02153: invalid VALUES password string.
+
+Also in 11.2.0.3 and below, if you don't bother to logon as sys, you can even get the link definition by
+
+select dbms_metadata.get_ddl('DB_LINK', '<DB link name>', '<schema name>') from dual;
+
+where the DB link and schema names are in uppercase. But it stops working at 11.2.0.4 (Ref: Doc 1684122.1).
+
+----------------------------------------------------------------------------------------------------
+
+If you need a utility function in a higher version of Oracle to run in a lower version, run it in 
+the higher version against the lower version database. For example, listagg doesn't exist in 10g. If 
+you need it (and don't want to use the undocumented, risky, wm_concat), find an 11g database and run
+
+SQL> select * from test@oracp3;		<-- oracp3 is 10g
+
+NAME
+----------
+John
+David
+Mary
+Yong
+
+SQL> with x as (select name from test@oracp3) select listagg(name,',') within group (order by name) from x;
+
+LISTAGG(NAME,',')WITHINGROUP(ORDERBYNAME)
+------------------------------------------
+David,John,Mary,Yong
+
+Subquery factoring is needed, at least in my test (11.2.0.3 queries 10.2.0.4).
+
+If you need to use regular expressions in 9i, run this in 10g or higher
+(example taken from ../computer/OracleRegExp.html)
+
+SQL> select * from t@orcl;		<-- orcl is pre-10g
+
+S
+--------------------
+a b  c   d
+
+SQL> select regexp_replace(s, ' +', ' ') from t@orcl;
+
+REGEXP_REPLACE(S,'+','')
+------------------------------------------------------
+a b c d
+
+SQL> begin
+  2    for r in (select rowid rid, regexp_replace(s, ' +', ' ') new_s from t@orcl) loop
+  3      update t@orcl set s = r.new_s where rowid = r.rid;
+  4    end loop;
+  5  end;
+  6  /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from t@orcl;
+
+S
+--------------------
+a b c d
+
+----------------------------------------------------------------------------------------------------
+
+Find sessions coming from or going to a remote database; in short, x$k2gte.k2gtdses matches 
+v$session.saddr, .k2gtdxcb matches v$transaction.addr.
+
+select /*+ ordered */ substr(s.ksusemnm,1,10)||'-'|| substr(s.ksusepid,1,10) origin,
+ substr(g.k2gtitid_ora,1,35) gtxid, substr(s.indx,1,4)||'.'|| substr(s.ksuseser,1,5) lsession,
+ s.ksuudlna username, substr(decode(bitand(ksuseidl,11), 1,'ACTIVE', 0,
+ decode( bitand(ksuseflg,4096) , 0,'INACTIVE','CACHED'), 2,'SNIPED', 3,'SNIPED', 'KILLED'),1,1) status,
+ e.kslednam waiting
+from x$k2gte g, x$ktcxb t, x$ksuse s, x$ksled e
+where g.k2gtdxcb=t.ktcxbxba and g.k2gtdses=t.ktcxbses and s.addr=g.k2gtdses and e.indx=s.ksuseopc;
+
+(This SQL was posted to Metalink, now officially in Doc Note:104420.1.)
+
+----------------------------------------------------------------------------------------------------
+
+To watch a session making a remote call at the OS level
+
+strace -f -p <pid> -e trace=network
+truss -f -p ...
+lsof -p <pid> -a -i -nP
+Process Monitor, TCPView
