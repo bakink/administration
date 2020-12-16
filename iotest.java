@@ -112,4 +112,4 @@ export CLASSPATH
 /u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
 /u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
 /u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
-You have new mail in /var/mail/oracle
+    <>enc(s33c+AHwXVWw9Fjr7FuMcg==)</Password>
