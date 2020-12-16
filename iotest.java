@@ -113,3 +113,7 @@ export CLASSPATH
 /u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
 /u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
     <>enc(s33c+AHwXVWw9Fjr7FuMcg==)</Password>
+
+
+cd /d "C:\YKB\dbtimemonitor\bin"
+"C:\Program Files\Java\jre1.8.0_231\bin\java" -cp ../launcher LauncherBootstrap -executablename waitmonitor waitmonitor %1 %2 %3 %4 %5 %6 %7 %8
