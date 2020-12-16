@@ -101,3 +101,15 @@ class MultithreadingDemo implements Runnable{
      }
   }
 }
+
+
+cd /u01/oracle/oracle_tr/ACS_tests
+CLASSPATH=.:$ORACLE_HOME/jdbc/lib/ojdbc5.jar
+export CLASSPATH
+
+/u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
+/u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
+/u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
+/u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
+/u01/app/oracle/product/11.2.0/dbhome_1/jdk/bin/java MultithreadingDemo 1 450 &
+You have new mail in /var/mail/oracle
