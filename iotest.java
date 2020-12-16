@@ -12,8 +12,7 @@ class MultithreadingDemo implements Runnable{
  
         try {
            DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
-           conn = DriverManager.getConnection(
-                                                        "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=xxxxx)(PORT=1931))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=SWS)))", "io_test", "io_test" );
+           conn = DriverManager.getConnection( "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.....)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=IOTEST)))", "io_test", "io_test" );
            System.out.println("Thread:" + table_number + " - connection established.");
         } catch (SQLException e) {
            System.err.println(e.getMessage());
@@ -42,7 +41,7 @@ class MultithreadingDemo implements Runnable{
            try {
               Thread.sleep(1000);
               DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
-              conn = DriverManager.getConnection( "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=xxxxx)(PORT=1931))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=SWS)))", "io_test", "io_test" );
+              conn = DriverManager.getConnection( "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.....)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=IOTEST)))", "io_test", "io_test" );
               System.out.println("Thread:" + table_number + " - connection re-established.");
               break;
            } catch (SQLException e1) {
