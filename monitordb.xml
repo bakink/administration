@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<MonitorDBConfig xmlns="http://www.dominicgiles.com/monitordb">
+    <Title>Monitor IO</Title>
+    <ConnectionDetails>
+        <Username>master</Username>
+        <Password>enc(s33c+AHwXVWw9Fjr7FuMcg==)</Password>
+        <ConnectString>//172.59.12.100:1521/IOTEST</ConnectString>
+        <DriverType>thin</DriverType>
+    </ConnectionDetails>
+    <MonitorSQLList>
+        <MonitoredSQL>
+            <Description>Throughput (MB/sec) Statistics</Description>
+            <SQL>select  'Physical Write (MB/sec)' category , 'Red' Color, sum(value) value from v$sysstat where NAME = 'physical write total bytes'
+                union
+                select  'Physical Read (MB/sec)' category, 'Green' Color, sum(value) value from v$sysstat where NAME = 'physical read total bytes'
+				union
+				select  'Logical Read (MB/sec)' category, 'Blue' Color, sum(value) value from v$sysstat where NAME = 'logical read bytes from cache'				
+            </SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <DivideBy>1048576</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>IOPS (IO/sec) Statistics</Description>
+            <SQL>select  'I/Os (read) ' category , 'Red' Color, sum(value) value from v$sysstat where NAME = 'physical read total IO requests'
+                union
+                select  'I/Os (write) ' category, 'Green' Color, sum(value) value from v$sysstat where NAME = 'physical write total IO requests'
+				
+            </SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <DivideBy>1</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>CPU</Description>
+            <SQL>select 'CPU %', 'Green', value  from v$sysmetric where METRIC_NAME='Host CPU Utilization (%)' and group_id =2</SQL>
+            <ProcessingBetweenExecutions>None</ProcessingBetweenExecutions>
+            <ChartType>Stacked</ChartType>
+            <DivideBy>1</DivideBy>
+            <RefreshRate>15</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>TEMPORARY TABLESPACE IOPS (IO/sec) Statistics</Description>
+            <SQL>select  'I/Os (read) ' category , 'Green' Color, sum(value) value from v$sysstat where NAME = 'physical reads direct temporary tablespace'
+                union
+                select  'I/Os (write) ' category, 'Red' Color, sum(value) value from v$sysstat where NAME = 'physical writes direct temporary tablespace'
+				
+            </SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <DivideBy>1</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>TOTAL ALLOCATED PGA</Description>
+            <SQL>SELECT 'TOTAL PGA ALLOC MB', 'Blue' Color, sum(pga_alloc_mem)/1024/1024 value from v$process </SQL>
+            <ProcessingBetweenExecutions>None</ProcessingBetweenExecutions>
+            <ChartType>Stacked</ChartType>
+            <DivideBy>1</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>IO Events AVG</Description>
+            <SQL>select  'log file sync avg' category ,'orange' Color,sum(10*average_wait) value FROM v$system_event WHERE event in ('log file sync')              
+				  union
+                 select  'db file sequential read avg' category , 'blue' Color,sum(10*average_wait) value FROM v$system_event WHERE event in ('db file sequential read')
+				 union
+				 select  'log file parallel write avg' category , 'Red' Color,sum(10*average_wait) value FROM v$system_event WHERE event in ('log file parallel write')
+				 union
+				 select  'db file parallel read#' category , 'brown' Color, sum(10*average_wait) value FROM v$system_event WHERE event in ('db file parallel read')
+				  union
+				 select  'db file parallel write#' category , 'pink' Color, sum(10*average_wait) value FROM v$system_event WHERE event in ('db file parallel write')
+            </SQL>
+            <ProcessingBetweenExecutions>None</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>User Commits / SQL Exec</Description>
+            <SQL>select  'User Commits' category , 'Red' Color, sum(value) value from v$sysstat where NAME = 'user commits'
+                union
+				select  'User Calls' category , 'orange' Color, sum(value) value from v$sysstat where NAME = 'user calls'
+				union
+                select  'SQL Execution Count' category, 'Blue' Color, sum(value) value from v$sysstat where NAME = 'execute count'
+            </SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>Redo Generated (MB/sec)</Description>
+            <SQL>select  'Redo (MB/sec)', 'Blue', sum(value) from v$sysstat where NAME = 'redo size'</SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Stacked</ChartType>
+            <DivideBy>1048576</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>Active Session Activity</Description>
+            <SQL>select b.wait_class, b.color, NVL(a.value,0) VALUE_
+from (
+SELECT wait_class, color, SUM(1) Value ,RANK_ 
+FROM(
+SELECT case  when v$session.state != 'WAITING' then 'CPU' else wait_class end wait_class,
+                  case
+                      when v$session.state != 'WAITING' then 'Green'
+					  when v$session.wait_class = 'Scheduler' then 'Light Green'
+                      when v$session.wait_class = 'User I/O' then 'Blue'
+                      when v$session.wait_class = 'System I/O' then 'Cyan'
+                      when v$session.wait_class = 'Concurrency' then 'Dark Red'
+                      when v$session.wait_class = 'Application' then 'Red'
+                      when v$session.wait_class = 'Commit' then 'Orange'
+                      when v$session.wait_class = 'Configuration' then 'Brown'
+                      when v$session.wait_class = 'Administrative' then 'Light Brown'
+                      when v$session.wait_class = 'Network' then 'Gray Brown'
+                      when v$session.wait_class = 'Queueing' then 'Light Gray Brown'
+					  when v$session.wait_class = 'Cluster' then 'Purple'
+                      when v$session.wait_class = 'Other' then 'Pink'
+                  end color, 
+				  case
+                      when v$session.state != 'WAITING' then 1
+					  when v$session.wait_class = 'Scheduler' then 2
+                      when v$session.wait_class = 'User I/O' then 3
+                      when v$session.wait_class = 'System I/O' then 4
+                      when v$session.wait_class = 'Concurrency' then 5
+                      when v$session.wait_class = 'Application' then 6
+                      when v$session.wait_class = 'Commit' then 7
+                      when v$session.wait_class = 'Configuration' then 8
+                      when v$session.wait_class = 'Administrative' then 9
+                      when v$session.wait_class = 'Network' then 10
+                      when v$session.wait_class = 'Queueing' then 11
+					  when v$session.wait_class = 'Cluster' then 12
+                      when v$session.wait_class = 'Other' then 13
+                  end rank_
+                FROM v$session
+                WHERE wait_class != 'Idle' AND type != 'BACKGROUND' AND status = 'ACTIVE'
+)
+GROUP BY wait_class, color, rank_) a, (
+SELECT 'CPU' wait_class, 'Green' color, 0 value, 1 rank_ from dual
+UNION
+SELECT 'Scheduler' wait_class, 'Light Green' color, 0 value, 2 rank_  from dual
+UNION
+SELECT 'System I/O' wait_class, 'Cyan' color, 0 value, 3 rank_  from dual
+UNION
+SELECT 'User I/O' wait_class, 'Blue' color, 0 value, 4 rank_  from dual
+UNION
+SELECT 'Concurrency' wait_class, 'Dark Red' color, 0 value, 5 rank_  from dual
+UNION
+SELECT 'Application' wait_class, 'Red' color, 0 value, 6 rank_  from dual
+UNION
+SELECT 'Commit' wait_class, 'Orange' color, 0 value, 7 rank_ from  dual
+UNION
+SELECT 'Configuration' wait_class, 'Brown' color, 0 value, 8 rank_  from dual
+UNION
+SELECT 'Administrative' wait_class, 'Light Brown' color, 0 value, 9 rank_  from dual
+UNION
+SELECT 'Network' wait_class, 'Gray Brown' color, 0 value, 10 rank_  from dual
+UNION
+SELECT 'Queueing' wait_class, 'Light Gray Brown' color, 0 value, 11 rank_  from dual
+UNION
+SELECT 'Cluster' wait_class, 'Purple' color, 0 value, 12 rank_  from dual
+UNION
+SELECT 'Other' wait_class, 'Pink' color, 0 value, 13 rank_  from dual
+) b
+WHERE a.wait_class(+) = b.wait_class AND a.color(+)=b.color
+ORDER BY b.rank_
+</SQL>
+            <ProcessingBetweenExecutions>None</ProcessingBetweenExecutions>
+            <ChartType>Stacked</ChartType>
+            <DivideBy>1</DivideBy>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+        <MonitoredSQL>
+            <Description>SQL Parse</Description>
+            <SQL>select  'parse(total)' category , 'Cyan' Color, sum(value) value from v$sysstat where NAME = 'parse count (total)'
+                union
+				select  'parse(hard)' category , 'Red' Color, sum(value) value from v$sysstat where NAME = 'parse count (hard)'
+				union
+                select  'parse(failures)' category, 'Orange' Color, sum(value) value from v$sysstat where NAME = 'parse count (failures)'
+            </SQL>
+            <ProcessingBetweenExecutions>Difference</ProcessingBetweenExecutions>
+            <ChartType>Line</ChartType>
+            <RefreshRate>1</RefreshRate>
+            <Enabled>true</Enabled>
+        </MonitoredSQL>
+    </MonitorSQLList>
+</MonitorDBConfig>
