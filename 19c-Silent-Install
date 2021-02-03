@@ -374,6 +374,29 @@ Patch description:  "Database Release Update : 19.5.0.0.191015 (30125133)"
    Created on 9 Oct 2019, 00:10:29 hrs PST8PDT
 
 
+--silent install with apply RU
+
+dcli -l oracle -g ~/dbs_group mkdir -p /u01/app/oracle/product/19.0.0.0/dbhome_3
+
+unzip -q /u01/install/19c/linux_64_193000_db_home.zip -d /u01/app/oracle/product/19.0.0.0/dbhome_3
+
+--download latest opatch
+
+./runInstaller -silent -applyRU /u01/install/19c/RU/31750108 -ignorePrereq -waitforcompletion  \
+oracle.install.option=INSTALL_DB_SWONLY                   \
+UNIX_GROUP_NAME=oinstall                                  \
+INVENTORY_LOCATION=/u01/app/oraInventory                  \
+ORACLE_HOME=/u01/app/oracle/product/19.0.0.0/dbhome_3     \
+ORACLE_BASE=/u01/app/oracle                               \
+oracle.install.db.InstallEdition=EE                       \
+oracle.install.db.OSDBA_GROUP=dba                         \
+oracle.install.db.OSOPER_GROUP=dba                        \
+oracle.install.db.OSBACKUPDBA_GROUP=dba                   \
+oracle.install.db.OSDGDBA_GROUP=dba                       \
+oracle.install.db.OSKMDBA_GROUP=dba                       \
+oracle.install.db.OSRACDBA_GROUP=dba                      \
+oracle.install.db.CLUSTER_NODES=owctdbadm01,owctdbadm02
+
 
 
 
