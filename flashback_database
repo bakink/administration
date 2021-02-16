@@ -1,0 +1,223 @@
+FLASHBACK DATABASE
+
+$ sqlplus "/ as sysdba"
+
+SQL*Plus: Release 10.2.0.4.0 - Production on Wed Dec 18 09:49:28 2013
+
+Copyright (c) 1982, 2007, Oracle.  All Rights Reserved.
+
+
+Connected to:
+Oracle Database 10g Enterprise Edition Release 10.2.0.4.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> select name from v$tablespace where flashback_on='NO';
+
+NAME
+------------------------------
+MENKUL2013_DATA
+MENKUL2013_INDEX
+
+SQL> archive log list
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            +ARCH
+Oldest online log sequence     53171
+Next log sequence to archive   0
+Current log sequence           53175
+SQL> select database_role, open_mode from v$database;
+
+DATABASE_ROLE    OPEN_MODE
+---------------- ----------
+PHYSICAL STANDBY MOUNTED
+
+SQL> archive log list
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            +ARCH
+Oldest online log sequence     53173
+Next log sequence to archive   0
+Current log sequence           53177
+SQL> show parameters db_recovery 
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +ARCH
+db_recovery_file_dest_size           big integer 100G
+
+SQL> alter database recover managed standby database cancel;
+
+Database altered.
+
+SQL> alter tablespace MENKUL2013_DATA flashback ON;
+
+Tablespace altered.
+
+SQL> alter tablespace MENKUL2013_INDEX flashback ON;
+
+Tablespace altered.
+
+SQL> select name from v$tablespace where flashback_on='NO';
+
+no rows selected
+
+SQL> alter database flashback on;
+alter database flashback on
+*
+ERROR at line 1:
+ORA-38706: Cannot turn on FLASHBACK DATABASE logging.
+ORA-38713: Flashback Database logging is already turned on.
+
+SQL> select * from v$restore_point; 
+
+no rows selected
+
+SQL> create restore point Before_App_Test guarantee flashback database;
+create restore point Before_App_Test guarantee flashback database
+*
+ERROR at line 1:
+ORA-38784: Cannot create restore point 'BEFORE_APP_TEST'.
+ORA-38788: More standby database recovery is needed
+
+
+SQL> alter database recover managed standby database disconnect from session;
+
+Database altered.
+
+SQL> alter database recover managed standby database cancel;
+
+Database altered.
+
+SQL> create restore point Before_App_Test guarantee flashback database;
+
+Restore point created.
+
+SQL> select name from v$tablespace where flashback_on='NO';
+
+no rows selected
+
+SQL> ALTER DATABASE ACTIVATE STANDBY DATABASE;
+
+Database altered.
+
+SQL> shutdown immediate;
+ORA-01109: database not open
+
+
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup mount;
+ORA-32004: obsolete and/or deprecated parameter(s) specified
+ORACLE instance started.
+
+Total System Global Area 7868514304 bytes
+Fixed Size                  2052936 bytes
+Variable Size            1275071672 bytes
+Database Buffers         6576668672 bytes
+Redo Buffers               14721024 bytes
+Database mounted.
+SQL> ALTER DATABASE OPEN;
+
+Database altered.
+
+SQL> select database_role, open_mode from v$database;
+
+DATABASE_ROLE    OPEN_MODE
+---------------- ----------
+PRIMARY          READ WRITE
+
+SQL> create table myusers as select * from dba_users;
+
+Table created.
+
+SQL> insert into myusers select * from myusers;
+
+105 rows created.
+
+SQL> r
+  1* insert into myusers select * from myusers
+
+210 rows created.
+
+SQL> r
+  1* insert into myusers select * from myusers
+
+420 rows created.
+
+SQL> r
+  1* insert into myusers select * from myusers
+
+840 rows created.
+
+SQL> commit;
+
+Commit complete.
+
+SQL> shutdown immediate;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup mount;
+ORA-32004: obsolete and/or deprecated parameter(s) specified
+ORACLE instance started.
+
+Total System Global Area 7868514304 bytes
+Fixed Size                  2052936 bytes
+Variable Size            1275071672 bytes
+Database Buffers         6576668672 bytes
+Redo Buffers               14721024 bytes
+Database mounted.
+SQL> flashback database to restore point before_app_test;
+
+Flashback complete.
+
+SQL> alter database convert to physical standby;
+
+Database altered.
+
+SQL> shutdown immediate; 
+ORA-01507: database not mounted
+
+
+ORACLE instance shut down.
+SQL> startup nomount;
+ORA-32004: obsolete and/or deprecated parameter(s) specified
+ORACLE instance started.
+
+Total System Global Area 7868514304 bytes
+Fixed Size                  2052936 bytes
+Variable Size            1275071672 bytes
+Database Buffers         6576668672 bytes
+Redo Buffers               14721024 bytes
+
+
+Bu arada PRIMARY tarafta 
+
+alter system set log_archive_dest_state_2='enable'  scope=both sid='*';
+
+vurulur
+
+SQL> alter database mount standby database;
+
+Database altered.
+
+SQL> select * from v$restore_point;
+
+       SCN DATABASE_INCARNATION# GUA STORAGE_SIZE
+---------- --------------------- --- ------------
+TIME
+---------------------------------------------------------------------------
+NAME
+--------------------------------------------------------------------------------
+7.8768E+11                     3 YES    306446336
+18-DEC-13 10.09.05.000000000 AM
+BEFORE_APP_TEST
+
+
+SQL> drop restore point BEFORE_APP_TEST;
+
+Restore point dropped.
+
+SQL> alter database recover managed standby database disconnect from session;
+
+Database altered.
