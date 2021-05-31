@@ -28,3 +28,6 @@ WHERE MASTER = 'BIN_ONUS_LIST'
 AND SL.SNAPID = S.SNAPSHOT_ID
 
 select dbms_metadata.get_ddl ('MATERIALIZED_VIEW_LOG','MLOG$XXX','OWNER') FROM DUAL;
+
+--Modifying tables without losing materialized views
+--https://connor-mcdonald.com/2018/09/10/modifying-tables-without-losing-materialized-views/
