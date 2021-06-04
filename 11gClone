@@ -1,0 +1,14 @@
+
+zip -r dbhome_1.zip /u01/app/oracle/product/11.2.0.4/dbhome_1
+scp ...
+unzip -d / dbhome_1.zip
+
+cd $ORACLE_HOME/oui/bin
+./runInstaller -clone -silent -ignorePreReq ORACLE_BASE="/u01/app/oracle"  \
+ORACLE_HOME="/u01/app/oracle/product/11.2.0.4/dbhome_1" \
+ORACLE_HOME_NAME="dbhome_11gR2" \
+OSDBA_GROUP=dba OSOPER_GROUP=dba \
+
+
+--detach
+./runInstaller -silent -detachHome -invPtrLoc /etc/oraInst.loc ORACLE_HOME="/u01/app/oracle/product/11.2.0.4/dbhome_1"
